@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#3B82F6" />
+    <meta name="description" content="ScoopSocials - Social media aggregation platform with community-driven trust scoring" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://scoopsocials.com/" />
+    <meta property="og:title" content="ScoopSocials - Verified Social Connections" />
+    <meta property="og:description" content="Aggregate your social media accounts into one trusted profile. Combat catfishing with community-driven verification." />
+    <meta property="og:image" content="%PUBLIC_URL%/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://scoopsocials.com/" />
+    <meta property="twitter:title" content="ScoopSocials - Verified Social Connections" />
+    <meta property="twitter:description" content="Aggregate your social media accounts into one trusted profile. Combat catfishing with community-driven verification." />
+    <meta property="twitter:image" content="%PUBLIC_URL%/og-image.png" />
+
+    <!-- Apple -->
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ScoopSocials" />
+
+    <!-- Manifest -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Mapbox CSS -->
+    <link href='https://api.mapbox.gl/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
+
+    <title>ScoopSocials - Verified Social Connections</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    
+    <!-- Loading fallback -->
+    <div id="loading-fallback" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-family: 'Inter', sans-serif;
+      z-index: 9999;
+    ">
+      <div style="text-align: center;">
+        <div style="
+          width: 60px;
+          height: 60px;
+          border: 3px solid rgba(255,255,255,0.3);
+          border-radius: 50%;
+          border-top-color: white;
+          animation: spin 1s ease-in-out infinite;
+          margin: 0 auto 20px;
+        "></div>
+        <h2 style="margin: 0; font-weight: 600; font-size: 24px;">ScoopSocials</h2>
+        <p style="margin: 8px 0 0; opacity: 0.8;">Loading your social universe...</p>
+      </div>
+    </div>
+
+    <style>
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      /* Hide loading fallback when React app loads */
+      #root:not(:empty) + #loading-fallback {
+        display: none !important;
+      }
+    </style>
+  </body>
+</html>
