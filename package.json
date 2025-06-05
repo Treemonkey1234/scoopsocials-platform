@@ -1,0 +1,39 @@
+{
+  "name": "scoopsocials-platform",
+  "version": "1.0.0",
+  "description": "Social media aggregation platform with community-driven trust scoring",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "web": "cd web && npm start",
+    "mobile": "cd mobile && npx react-native start",
+    "install-all": "npm install && cd web && npm install && cd ../mobile && npm install && cd ../backend && npm install",
+    "build": "cd web && npm run build",
+    "test": "cd backend && npm test && cd ../web && npm test",
+    "deploy": "deploy.bat"
+  },
+  "keywords": [
+    "social-media",
+    "trust-score",
+    "verification",
+    "react-native",
+    "nodejs",
+    "anti-catfishing",
+    "community-validation"
+  ],
+  "author": "ScoopSocials LLC",
+  "license": "PROPRIETARY",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git", 
+    "url": "https://github.com/Treemonkey1234/scoopsocials-platform.git"
+  },
+  "homepage": "https://scoopsocials.online",
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "scoopsocials-platform",
+  "version": 2,
+  "builds": [
+    {
+      "src": "web/build/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://scoopsocials-platform-production.up.railway.app/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/web/build/index.html"
+    }
+  ]
+}

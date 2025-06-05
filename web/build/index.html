@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="ScoopSocials - Your trusted social verification platform" />
+    <title>ScoopSocials - Trusted Social Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="min-h-screen bg-gray-50">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center h-16">
+                        <div class="flex items-center">
+                            <h1 class="text-2xl font-bold text-blue-600">
+                                🛡️ ScoopSocials
+                            </h1>
+                        </div>
+                        <nav class="hidden md:flex space-x-8">
+                            <button onclick="showHome()" class="text-blue-600 hover:text-gray-900 transition-colors">
+                                Home
+                            </button>
+                            <button onclick="showAbout()" class="text-gray-600 hover:text-gray-900 transition-colors">
+                                About
+                            </button>
+                            <button onclick="showFeatures()" class="text-gray-600 hover:text-gray-900 transition-colors">
+                                Features
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div id="home-page" class="page-content">
+                    <div class="text-center">
+                        <div class="max-w-4xl mx-auto">
+                            <h2 class="text-5xl font-bold text-gray-900 mb-6">
+                                Welcome to ScoopSocials
+                            </h2>
+                            
+                            <p class="text-xl text-gray-600 mb-12 leading-relaxed">
+                                Your trusted social verification platform that aggregates social media accounts 
+                                into one verified profile, building trust and combating catfishing through 
+                                community-driven validation.
+                            </p>
+
+                            <!-- Status Cards -->
+                            <div class="grid md:grid-cols-3 gap-8 mb-12">
+                                <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                                    <div class="text-green-500 text-3xl mb-4">✅</div>
+                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Frontend</h3>
+                                    <p class="text-gray-600">React app deployed successfully</p>
+                                </div>
+                                
+                                <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                                    <div class="text-green-500 text-3xl mb-4">✅</div>
+                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Backend API</h3>
+                                    <p class="text-gray-600">Railway deployment active</p>
+                                    <p class="text-sm text-blue-600 mt-2">
+                                        <a href="https://scoopsocials-platform-production.up.railway.app/health" 
+                                           target="_blank" 
+                                           rel="noopener noreferrer"
+                                           class="hover:underline">
+                                            API Health Check
+                                        </a>
+                                    </p>
+                                </div>
+                                
+                                <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                                    <div class="text-green-500 text-3xl mb-4">✅</div>
+                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Database</h3>
+                                    <p class="text-gray-600">MongoDB Atlas connected</p>
+                                </div>
+                            </div>
+
+                            <!-- Call to Action -->
+                            <div class="space-y-4">
+                                <button class="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors">
+                                    Platform Successfully Deployed! 🎉
+                                </button>
+                                <p class="text-gray-500">
+                                    Domain conflict resolved! Frontend and backend now working together.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="about-page" class="page-content" style="display: none;">
+                    <div class="max-w-3xl mx-auto">
+                        <h2 class="text-4xl font-bold text-gray-900 mb-8">About ScoopSocials</h2>
+                        <div class="prose prose-lg text-gray-600">
+                            <p class="mb-6">
+                                ScoopSocials is a revolutionary social verification platform designed to build trust 
+                                in digital connections by aggregating and verifying social media accounts through 
+                                community-driven validation.
+                            </p>
+                            <p class="mb-6">
+                                Our 11-factor trust score algorithm helps combat catfishing and build authentic 
+                                connections in the digital world.
+                            </p>
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-4">Mission</h3>
+                            <p>
+                                To create a safer, more trustworthy online environment where people can connect 
+                                with confidence, knowing that profiles are verified and authentic.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="features-page" class="page-content" style="display: none;">
+                    <div class="max-w-4xl mx-auto">
+                        <h2 class="text-4xl font-bold text-gray-900 mb-8 text-center">Platform Features</h2>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                                <h3 class="text-xl font-semibold text-gray-900 mb-4">🏆 Trust Score Algorithm</h3>
+                                <p class="text-gray-600">
+                                    Our sophisticated 11-factor scoring system evaluates user credibility based on social media activity, 
+                                    engagement patterns, and community validation.
+                                </p>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                                <h3 class="text-xl font-semibold text-gray-900 mb-4">🔗 Social Media Aggregation</h3>
+                                <p class="text-gray-600">
+                                    Connect Twitter, Instagram, LinkedIn, TikTok, YouTube, Facebook, and more social media accounts 
+                                    to build a comprehensive digital identity.
+                                </p>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                                <h3 class="text-xl font-semibold text-gray-900 mb-4">👥 Community Validation</h3>
+                                <p class="text-gray-600">
+                                    Community-driven agree/disagree voting system on posts and profiles helps verify authenticity 
+                                    through collective intelligence.
+                                </p>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                                <h3 class="text-xl font-semibold text-gray-900 mb-4">🔒 Anti-Catfishing</h3>
+                                <p class="text-gray-600">
+                                    Advanced verification system detects fake profiles and bots by analyzing social presence, 
+                                    posting patterns, and community interactions.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-gray-900 text-white py-12 mt-20">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <p class="text-gray-400">
+                        © 2024 ScoopSocials. Building trust in digital connections.
+                    </p>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.style.display = 'none';
+            });
+            
+            // Show selected page
+            document.getElementById(pageId).style.display = 'block';
+            
+            // Update navigation buttons
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('text-blue-600');
+                btn.classList.add('text-gray-600');
+            });
+        }
+
+        function showHome() {
+            showPage('home-page');
+            event.target.classList.remove('text-gray-600');
+            event.target.classList.add('text-blue-600');
+        }
+
+        function showAbout() {
+            showPage('about-page');
+            event.target.classList.remove('text-gray-600');
+            event.target.classList.add('text-blue-600');
+        }
+
+        function showFeatures() {
+            showPage('features-page');
+            event.target.classList.remove('text-gray-600');
+            event.target.classList.add('text-blue-600');
+        }
+    </script>
+</body>
+</html>
