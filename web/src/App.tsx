@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
 
+// TypeScript interfaces for component props
+interface ScreenProps {
+  onNext: () => void;
+}
+
+interface NavigationProps {
+  onNavigate: (screen: string) => void;
+}
+
 function App() {
   const [currentScreen, setCurrentScreen] = useState('login');
 
@@ -73,7 +82,7 @@ function App() {
 }
 
 // Login Screen Component
-const LoginScreen: React.FC<{ onNext: () => void }> = ({ onNext }) => {
+const LoginScreen: React.FC<ScreenProps> = ({ onNext }) => {
   return (
     <div className="bg-gradient-to-b from-cyan-400 to-cyan-600 h-screen flex flex-col items-center justify-center text-white relative">
       {/* Scoop Logo */}
@@ -109,7 +118,7 @@ const LoginScreen: React.FC<{ onNext: () => void }> = ({ onNext }) => {
 };
 
 // Login Form Screen Component
-const LoginFormScreen: React.FC<{ onNext: () => void }> = ({ onNext }) => {
+const LoginFormScreen: React.FC<ScreenProps> = ({ onNext }) => {
   return (
     <div className="min-h-screen bg-white">
       <div className="bg-gradient-to-b from-cyan-400 to-cyan-600 h-32 flex items-center justify-center">
@@ -172,7 +181,7 @@ const LoginFormScreen: React.FC<{ onNext: () => void }> = ({ onNext }) => {
 };
 
 // Profile Screen Component
-const ProfileScreen: React.FC<{ onNavigate: (screen: string) => void }> = ({ onNavigate }) => {
+const ProfileScreen: React.FC<NavigationProps> = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Profile Header */}
@@ -267,7 +276,7 @@ const ProfileScreen: React.FC<{ onNavigate: (screen: string) => void }> = ({ onN
 };
 
 // Groups Screen Component
-const GroupsScreen: React.FC<{ onNavigate: (screen: string) => void }> = ({ onNavigate }) => {
+const GroupsScreen: React.FC<NavigationProps> = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Search Header */}
