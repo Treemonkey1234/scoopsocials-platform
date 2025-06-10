@@ -2,9 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // Commented out for development - uncomment for production build
-  // output: 'export',
+  output: 'export',
   trailingSlash: true,
+  basePath: '/scoopsocials-platform',
+  assetPrefix: '/scoopsocials-platform',
   images: {
     unoptimized: true,
   },
@@ -13,14 +14,6 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: false,
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'https://scoopsocials-platform-production.up.railway.app/api/:path*',
-      },
-    ];
   },
 }
 
