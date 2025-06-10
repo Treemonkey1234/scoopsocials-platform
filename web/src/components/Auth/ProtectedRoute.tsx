@@ -1,17 +1,16 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store/store';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  // Simplified version for Electron app - always allow access
+  // In a real app, you would check authentication state here
+  const isAuthenticated = true;
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <div>Please log in to access this content.</div>;
   }
 
   return <>{children}</>;

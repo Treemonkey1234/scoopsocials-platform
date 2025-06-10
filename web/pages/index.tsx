@@ -1,17 +1,3229 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-
-// TypeScript interfaces for component props
-interface ScreenProps {
-  onNext: () => void;
-}
 
 interface NavigationProps {
   onNavigate: (screen: string) => void;
 }
 
+interface Post {
+  id: string;
+  reviewer: string;
+  reviewerTrustScore: number;
+  reviewedPerson: string;
+  content: string;
+  timestamp: string;
+  votes: number;
+  userVote: 'up' | 'down' | null;
+  comments: number;
+  category: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+  username: string;
+  trustScore: number;
+  avatar: string;
+}
+
+const HomeScreen: React.FC<NavigationProps & { setPostId: (id: string) => void; setUserId: (id: string) => void; posts: Post[]; setPosts: (posts: Post[]) => void; }> = ({ 
+  onNavigate, setPostId, setUserId, posts, setPosts 
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [flagModal, setFlagModal] = useState<{isOpen: boolean; postId: string | null}>({
+    isOpen: false,
+    postId: null
+  });
+  const [flagReason, setFlagReason] = useState('');
+  const [flagDetails, setFlagDetails] = useState('');
+
+  const handleVote = (postId: string, voteType: 'up' | 'down') => {
+    setPosts(posts.map(post => {
+      if (post.id === postId) {
+        let newVotes = post.votes;
+        let newUserVote: 'up' | 'down' | null = voteType;
+
+        if (post.userVote === voteType) {
+          newUserVote = null;
+          newVotes = voteType === 'up' ? post.votes - 1 : post.votes + 1;
+        } else if (post.userVote === null) {
+          newVotes = voteType === 'up' ? post.votes + 1 : post.votes - 1;
+        } else {
+          newVotes = voteType === 'up' ? post.votes + 2 : post.votes - 2;
+        }
+
+        return { ...post, votes: newVotes, userVote: newUserVote };
+      }
+      return post;
+    }));
+  };
+
+  const handleFlag = (postId: string) => {
+    setFlagModal({ isOpen: true, postId });
+    setFlagReason('');
+    setFlagDetails('');
+  };
+
+  const handleFlagSubmit = () => {
+    if (!flagReason) {
+      alert('Please select a reason for flagging this post.');
+      return;
+    }
+
+    // Here you would typically send to your backend
+    console.log(`Post ${flagModal.postId} flagged for: ${flagReason}`, {
+      details: flagDetails,
+      timestamp: new Date().toISOString()
+    });
+
+    // Close modal and reset
+    setFlagModal({ isOpen: false, postId: null });
+    setFlagReason('');
+    setFlagDetails('');
+    
+    alert(`Post reported for ${flagReason}. Thank you for helping keep our community safe.`);
+  };
+
+  const handleFlagCancel = () => {
+    setFlagModal({ isOpen: false, postId: null });
+    setFlagReason('');
+    setFlagDetails('');
+  };
+
+  const handlePostClick = (postId: string) => {
+    setPostId(postId);
+    onNavigate('postthread');
+  };
+
+  return (
+    <div className="h-full flex flex-col" style={{background: 'linear-gradient(135deg, #f0fdff 0%, #e0f7fa 50%, #b2dfdb 100%)'}}>
+      <div className="px-6 py-4 border-b border-cyan-300 flex-shrink-0 shadow-lg" style={{background: 'linear-gradient(135deg, #0891b2 0%, #0e7490 20%, #155e75 100%)'}}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white drop-shadow-md">Home Feed</h1>
+              <p className="text-xs text-cyan-100 opacity-90">Friend reviews & trust scores</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => onNavigate('createpost')}
+            className="w-12 h-12 bg-white shadow-lg border-2 border-cyan-100 rounded-xl flex items-center justify-center text-cyan-600 text-xl font-bold hover:bg-cyan-50 hover:text-cyan-700 transition-all duration-200 hover:scale-105"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar" style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#9CA3AF #F3F4F6'
+      }}>
+        <div className="px-4 py-3 space-y-3 pb-4">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1,2,3].map(i => (
+              <div key={i} className="bg-white rounded-lg p-4 shadow-sm animate-pulse">
+                <div className="flex items-center mb-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full mr-3"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          posts.map((post) => (
+            <div key={post.id} className="rounded-lg shadow-md border border-cyan-200" style={{background: 'linear-gradient(145deg, #ffffff 0%, #f8fdff 100%)'}}>
+              <div className="flex">
+                {/* Left side - Voting buttons */}
+                <div className="flex flex-col items-center justify-center py-4 px-3 border-r border-cyan-200 w-16" style={{background: 'linear-gradient(180deg, #f0fdff 0%, #e6fffa 100%)'}}>
+                  <button
+                    onClick={() => handleVote(post.id, 'up')}
+                    className={`flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-200 ${
+                      post.userVote === 'up' 
+                        ? 'text-green-600 bg-green-100 shadow-md scale-110 border-2 border-green-300' 
+                        : 'text-gray-400 hover:text-green-600 hover:bg-green-50 hover:scale-105'
+                    }`}
+                  >
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" strokeWidth={post.userVote === 'up' ? '4' : '2.5'}>
+                      <path d="M5 15l7-7 7 7"/>
+                    </svg>
+                  </button>
+                  <span className={`text-lg font-bold py-2 ${
+                    post.votes > 0 ? 'text-green-600' : 
+                    post.votes < 0 ? 'text-red-600' : 
+                    'text-gray-600'
+                  }`}>
+                    {post.votes}
+                  </span>
+                  <button
+                    onClick={() => handleVote(post.id, 'down')}
+                    className={`flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-200 ${
+                      post.userVote === 'down' 
+                        ? 'text-red-600 bg-red-100 shadow-md scale-110 border-2 border-red-300' 
+                        : 'text-gray-400 hover:text-red-600 hover:bg-red-50 hover:scale-105'
+                    }`}
+                  >
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" strokeWidth={post.userVote === 'down' ? '4' : '2.5'}>
+                      <path d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Right side - Post content */}
+                <div className="flex-1 p-4">
+                  {/* Post header */}
+                  <div className="mb-4">
+                    <div className="flex items-center mb-2">
+                      <span className="text-sm font-medium text-gray-900 mr-2">{post.reviewer}</span>
+                      <span className="text-gray-400 mx-2">reviewed</span>
+                      <span className="text-sm font-medium text-cyan-600 cursor-pointer hover:text-cyan-700 ml-2"
+                            onClick={() => { setUserId(post.reviewedPerson); onNavigate('userprofile'); }}>
+                        {post.reviewedPerson}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
+                        post.reviewerTrustScore >= 80 ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                        post.reviewerTrustScore >= 60 ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300' :
+                        'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300'
+                      }`}>
+                        Trust: {post.reviewerTrustScore}
+                      </span>
+                      <span className="text-xs text-gray-500">{post.timestamp}</span>
+                      <span className="px-3 py-1 bg-gradient-to-r from-cyan-100 to-cyan-200 text-cyan-800 rounded-full text-xs font-medium border border-cyan-300 shadow-sm">
+                        {post.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div 
+                    className="cursor-pointer hover:bg-gray-50 rounded p-2 -m-2 transition-colors mb-3"
+                    onClick={() => handlePostClick(post.id)}
+                  >
+                    <p className="text-gray-800 text-sm leading-relaxed hover:text-gray-900">{post.content}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <div className="flex items-center space-x-4">
+                      <button 
+                        onClick={() => handlePostClick(post.id)}
+                        className="flex items-center text-gray-500 hover:text-blue-600 transition-colors"
+                      >
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        <span className="text-sm">{post.comments}</span>
+                      </button>
+
+                      <button className="flex items-center text-gray-500 hover:text-blue-600 transition-colors">
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                        </svg>
+                        <span className="text-sm">Share</span>
+                      </button>
+                    </div>
+
+                    <button 
+                      onClick={() => handleFlag(post.id)}
+                      className="flex items-center text-gray-500 hover:text-red-600 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/>
+                      </svg>
+                      <span className="text-sm">Flag</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+        </div>
+      </div>
+
+      {/* Flag Report Modal */}
+      {flagModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style={{maxWidth: '393px', margin: '0 auto'}}>
+          <div className="bg-white rounded-lg p-4 w-full max-w-xs mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Report this post</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Reporting post by: <span className="font-medium text-gray-900">
+                {posts.find(post => post.id === flagModal.postId)?.reviewer}
+              </span>
+            </p>
+            
+            <div className="mb-4">
+              <p className="text-sm font-medium text-gray-700 mb-3">Reason for reporting:</p>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="flagReason"
+                    value="doxxing"
+                    checked={flagReason === 'doxxing'}
+                    onChange={(e) => setFlagReason(e.target.value)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">Doxxing/Personal Information</span>
+                </label>
+                
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="flagReason"
+                    value="unconstructive"
+                    checked={flagReason === 'unconstructive'}
+                    onChange={(e) => setFlagReason(e.target.value)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">Unconstructive Content</span>
+                </label>
+                
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="flagReason"
+                    value="spam"
+                    checked={flagReason === 'spam'}
+                    onChange={(e) => setFlagReason(e.target.value)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">Spam or Irrelevant</span>
+                </label>
+                
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="flagReason"
+                    value="harassment"
+                    checked={flagReason === 'harassment'}
+                    onChange={(e) => setFlagReason(e.target.value)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">Harassment or Abuse</span>
+                </label>
+                
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="flagReason"
+                    value="other"
+                    checked={flagReason === 'other'}
+                    onChange={(e) => setFlagReason(e.target.value)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">Other</span>
+                </label>
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Additional details (optional):
+              </label>
+              <textarea
+                value={flagDetails}
+                onChange={(e) => setFlagDetails(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-none"
+                rows={3}
+                placeholder="Please provide more context about why you're flagging this post..."
+              />
+            </div>
+            
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-yellow-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <p className="text-sm text-yellow-800">
+                  <strong>Warning:</strong> False flagging may result in a decrease to your Trust Score.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={handleFlagCancel}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleFlagSubmit}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                style={{backgroundColor: '#dc2626', color: '#ffffff'}}
+              >
+                Submit Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CreatePostScreen: React.FC<NavigationProps & { onCreatePost: (content: string, selectedFriends: User[]) => void; selectedFriendsForReview: User[]; }> = ({ 
+  onNavigate, onCreatePost, selectedFriendsForReview 
+}) => {
+  const [content, setContent] = useState('');
+  const [showResponsibilityPopup, setShowResponsibilityPopup] = useState(false);
+
+  const handleReviewClick = () => {
+    if (selectedFriendsForReview.length === 0) {
+      alert('Please select who you are reviewing first.');
+      return;
+    }
+    if (content.trim() === '') {
+      alert('Please write your review before submitting.');
+      return;
+    }
+    setShowResponsibilityPopup(true);
+  };
+
+  const handleFinalPost = () => {
+    onCreatePost(content, selectedFriendsForReview);
+    setContent('');
+    setShowResponsibilityPopup(false);
+    onNavigate('home');
+  };
+
+  return (
+    <div className="bg-gray-50 h-full flex flex-col">
+      <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <button 
+            onClick={() => onNavigate('home')}
+            className="text-blue-600 font-medium"
+          >
+            Cancel
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900">Write Review</h1>
+          <div className="w-16"></div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Who are you reviewing?</label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[100px]">
+              {selectedFriendsForReview.length === 0 ? (
+                <button 
+                  onClick={() => onNavigate('friendroster')}
+                  className="w-full h-full flex flex-col items-center justify-center text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span className="text-sm">Add Friend</span>
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  {selectedFriendsForReview.map((friend) => (
+                    <div key={friend.id} className="flex items-center justify-between bg-white rounded-lg p-3 border">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-cyan-600 font-medium text-sm">{friend.name.charAt(0)}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{friend.name}</p>
+                          <p className="text-sm text-gray-500">Trust: {friend.trustScore}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => onNavigate('friendroster')}
+                        className="text-cyan-600 text-sm font-medium"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ))}
+                  <button 
+                    onClick={() => onNavigate('friendroster')}
+                    className="w-full flex items-center justify-center py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add More
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Your Review</label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Share your experience with this person. Be honest and constructive..."
+              className="w-full h-40 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              Remember: Your Trust Score can be negatively impacted by rash or false reviews. Reviews are subject to flagging which can hurt your reputation.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white border-t border-gray-100 p-6">
+        <button
+          onClick={handleReviewClick}
+          className="w-full bg-cyan-400 text-white py-3 px-4 rounded-lg font-medium hover:bg-cyan-500 transition-colors"
+        >
+          Review
+        </button>
+      </div>
+
+      {showResponsibilityPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-[120]">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Responsibility Notice</h3>
+            <p className="text-gray-700 mb-6">
+              You take on the responsibility for the results of your post. Please ensure your review is honest, fair, and constructive.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowResponsibilityPopup(false)}
+                className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleFinalPost}
+                className="flex-1 bg-cyan-400 text-white py-2 px-4 rounded-lg font-medium hover:bg-cyan-500 transition-colors"
+              >
+                Post
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const FriendRosterScreen: React.FC<NavigationProps & { 
+  onSelectFriends: (friends: User[]) => void; 
+  selectedFriendsForReview: User[];
+}> = ({ onNavigate, onSelectFriends, selectedFriendsForReview }) => {
+  const [selectedFriends, setSelectedFriends] = useState<User[]>(selectedFriendsForReview);
+
+  const mockFriends: User[] = [
+    { id: '1', name: 'Jessica Wong', username: '@jessicaw', trustScore: 95, avatar: '👩🏻‍💼' },
+    { id: '2', name: 'Mike Johnson', username: '@mikej', trustScore: 92, avatar: '👨🏽‍🎨' },
+    { id: '3', name: 'Alex Martinez', username: '@alexm', trustScore: 89, avatar: '👨🏻‍🎓' },
+    { id: '4', name: 'Sarah Chen', username: '@sarahc', trustScore: 89, avatar: '👩🏻‍🎤' },
+    { id: '5', name: 'David Kim', username: '@davidk', trustScore: 85, avatar: '👨🏻‍💻' },
+    { id: '6', name: 'Rachel Brown', username: '@rachelb', trustScore: 82, avatar: '👩🏽‍🏫' },
+    { id: '7', name: 'Emma Davis', username: '@emmad', trustScore: 78, avatar: '👩🏻‍🔬' },
+    { id: '8', name: 'Nina Patel', username: '@ninap', trustScore: 74, avatar: '👩🏽‍⚕️' },
+    { id: '9', name: 'Tom Anderson', username: '@toma', trustScore: 67, avatar: '👨🏻‍💼' },
+    { id: '10', name: 'Kevin Lee', username: '@kevinl', trustScore: 43, avatar: '👨🏻‍🔧' },
+    { id: '11', name: 'Carlos Rivera', username: '@carlosr', trustScore: 38, avatar: '👨🏽‍🎯' },
+    { id: '12', name: 'Lisa Garcia', username: '@lisag', trustScore: 31, avatar: '👩🏽‍🎨' }
+  ];
+
+  const handleFriendToggle = (friend: User) => {
+    setSelectedFriends(prev => {
+      const isSelected = prev.some(f => f.id === friend.id);
+      if (isSelected) {
+        return prev.filter(f => f.id !== friend.id);
+      } else {
+        return [...prev, friend];
+      }
+    });
+  };
+
+  const handleDone = () => {
+    onSelectFriends(selectedFriends);
+    onNavigate('createpost');
+  };
+
+  return (
+    <div className="bg-gray-50 h-full flex flex-col">
+      <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <button 
+            onClick={() => onNavigate('createpost')}
+            className="text-blue-600 font-medium"
+          >
+            Back
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900">Select Friends</h1>
+          <button 
+            onClick={handleDone}
+            className="bg-cyan-400 text-white px-4 py-2 rounded-lg font-medium hover:bg-cyan-500 transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-2">
+          {mockFriends.map((friend) => {
+            const isSelected = selectedFriends.some(f => f.id === friend.id);
+            return (
+              <div 
+                key={friend.id}
+                onClick={() => handleFriendToggle(friend)}
+                className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
+                  isSelected 
+                    ? 'bg-cyan-50 border-cyan-200' 
+                    : 'bg-white border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mr-4">
+                    <span className="text-2xl">{friend.avatar}</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{friend.name}</p>
+                    <p className="text-sm text-gray-500">{friend.username}</p>
+                    <p className={`text-xs font-medium ${
+                      friend.trustScore >= 80 ? 'text-green-600' :
+                      friend.trustScore >= 60 ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      Trust Score: {friend.trustScore}
+                    </p>
+                  </div>
+                </div>
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                  isSelected 
+                    ? 'bg-cyan-400 border-cyan-400' 
+                    : 'border-gray-300'
+                }`}>
+                  {isSelected && (
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PostThreadScreen: React.FC<NavigationProps & { postId: string; posts: Post[]; }> = ({ onNavigate, postId, posts }) => {
+  const post = posts.find(p => p.id === postId);
+  const [comments, setComments] = useState([
+    {
+      id: '1',
+      author: 'Mike Johnson',
+      authorTrustScore: 92,
+      content: 'This is really helpful context for anyone thinking of working with David. Professionalism matters!',
+      timestamp: '2h ago',
+      votes: 8,
+      userVote: null as 'up' | 'down' | null,
+      replies: [
+        {
+          id: '2',
+          author: 'Alex Martinez',
+          authorTrustScore: 89,
+          content: 'Totally agree. David helped me with my presentation too and was incredibly reliable.',
+          timestamp: '1h ago',
+          votes: 5,
+          userVote: null as 'up' | 'down' | null
+        }
+      ]
+    },
+    {
+      id: '3',
+      author: 'Rachel Brown',
+      authorTrustScore: 82,
+      content: 'Great to see positive professional reviews! This is exactly what this platform is for.',
+      timestamp: '45m ago',
+      votes: 6,
+      userVote: null as 'up' | 'down' | null,
+      replies: []
+    }
+  ]);
+  const [newComment, setNewComment] = useState('');
+  const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set(['1', '3']));
+
+  if (!post) {
+    return (
+      <div className="bg-gray-50 h-full flex items-center justify-center">
+        <p className="text-gray-500">Post not found</p>
+      </div>
+    );
+  }
+
+  const toggleThread = (threadId: string) => {
+    setExpandedThreads(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(threadId)) {
+        newSet.delete(threadId);
+      } else {
+        newSet.add(threadId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleCommentVote = (commentId: string, voteType: 'up' | 'down', isReply: boolean = false, parentId?: string) => {
+    setComments(prev => prev.map(comment => {
+      if (!isReply && comment.id === commentId) {
+        let newVotes = comment.votes;
+        let newUserVote: 'up' | 'down' | null = voteType;
+
+        if (comment.userVote === voteType) {
+          newUserVote = null;
+          newVotes = voteType === 'up' ? comment.votes - 1 : comment.votes + 1;
+        } else if (comment.userVote === null) {
+          newVotes = voteType === 'up' ? comment.votes + 1 : comment.votes - 1;
+        } else {
+          newVotes = voteType === 'up' ? comment.votes + 2 : comment.votes - 2;
+        }
+
+        return { ...comment, votes: newVotes, userVote: newUserVote };
+      } else if (isReply && comment.id === parentId) {
+        return {
+          ...comment,
+          replies: comment.replies.map(reply => {
+            if (reply.id === commentId) {
+              let newVotes = reply.votes;
+              let newUserVote: 'up' | 'down' | null = voteType;
+
+              if (reply.userVote === voteType) {
+                newUserVote = null;
+                newVotes = voteType === 'up' ? reply.votes - 1 : reply.votes + 1;
+              } else if (reply.userVote === null) {
+                newVotes = voteType === 'up' ? reply.votes + 1 : reply.votes - 1;
+              } else {
+                newVotes = voteType === 'up' ? reply.votes + 2 : reply.votes - 2;
+              }
+
+              return { ...reply, votes: newVotes, userVote: newUserVote };
+            }
+            return reply;
+          })
+        };
+      }
+      return comment;
+    }));
+  };
+
+  const handleAddComment = () => {
+    if (newComment.trim()) {
+      const comment = {
+        id: Date.now().toString(),
+        author: 'Riesling Lefluuf',
+        authorTrustScore: 84,
+        content: newComment,
+        timestamp: 'now',
+        votes: 0,
+        userVote: null as 'up' | 'down' | null,
+        replies: []
+      };
+      setComments(prev => [...prev, comment]);
+      setExpandedThreads(prev => new Set([...Array.from(prev), comment.id]));
+      setNewComment('');
+    }
+  };
+
+  return (
+    <div className="bg-gray-50 h-full flex flex-col">
+      <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center">
+          <button 
+            onClick={() => onNavigate('home')}
+            className="mr-4 text-blue-600"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900">Thread</h1>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="bg-white border-b border-gray-100 p-6">
+          <div className="flex items-center mb-3">
+            <span className="text-sm font-medium text-gray-900">{post.reviewer}</span>
+            <span className="mx-2 text-gray-400">reviewed</span>
+            <span className="text-sm font-medium text-blue-600">{post.reviewedPerson}</span>
+          </div>
+          <div className="flex items-center text-xs text-gray-500 mb-4">
+            <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium mr-2 ${
+              post.reviewerTrustScore >= 80 ? 'bg-green-100 text-green-800' :
+              post.reviewerTrustScore >= 60 ? 'bg-yellow-100 text-yellow-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              Trust: {post.reviewerTrustScore}
+            </span>
+            <span>{post.timestamp}</span>
+            <span className="mx-2">•</span>
+            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">{post.category}</span>
+          </div>
+          <p className="text-gray-800 leading-relaxed mb-4">{post.content}</p>
+          
+          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+            <div className="flex items-center space-x-1">
+              <div className="flex flex-col items-center">
+                <button className="p-1 rounded transition-colors text-gray-400 hover:text-green-600 hover:bg-green-50">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                <span className={`text-sm font-medium ${
+                  post.votes > 0 ? 'text-green-600' : 
+                  post.votes < 0 ? 'text-red-600' : 
+                  'text-gray-600'
+                }`}>
+                  {post.votes}
+                </span>
+                <button className="p-1 rounded transition-colors text-gray-400 hover:text-red-600 hover:bg-red-50">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <span className="flex items-center text-gray-500">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span className="text-sm">{comments.length}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {comments.map((comment) => (
+            <div key={comment.id} className="bg-white rounded-lg border border-gray-100">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    <span className="font-medium text-gray-900 text-sm">{comment.author}</span>
+                    <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                      comment.authorTrustScore >= 80 ? 'bg-green-100 text-green-800' :
+                      comment.authorTrustScore >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {comment.authorTrustScore}
+                    </span>
+                    <span className="ml-2 text-xs text-gray-500">{comment.timestamp}</span>
+                  </div>
+                  <button 
+                    onClick={() => toggleThread(comment.id)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className={`w-4 h-4 transition-transform ${expandedThreads.has(comment.id) ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+                
+                {expandedThreads.has(comment.id) && (
+                  <>
+                    <p className="text-gray-800 text-sm mb-3">{comment.content}</p>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => handleCommentVote(comment.id, 'up')}
+                          className={`p-1 rounded transition-colors ${
+                            comment.userVote === 'up' 
+                              ? 'text-green-600 bg-green-50' 
+                              : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        <span className={`text-sm font-medium ${
+                          comment.votes > 0 ? 'text-green-600' : 
+                          comment.votes < 0 ? 'text-red-600' : 
+                          'text-gray-600'
+                        }`}>
+                          {comment.votes}
+                        </span>
+                        <button
+                          onClick={() => handleCommentVote(comment.id, 'down')}
+                          className={`p-1 rounded transition-colors ${
+                            comment.userVote === 'down' 
+                              ? 'text-red-600 bg-red-50' 
+                              : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                      
+                      <span className="text-xs text-gray-500">
+                        {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
+                      </span>
+                    </div>
+
+                    {comment.replies.length > 0 && (
+                      <div className="mt-3 pl-4 border-l-2 border-gray-100 space-y-3">
+                        {comment.replies.map((reply) => (
+                          <div key={reply.id} className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center mb-2">
+                              <span className="font-medium text-gray-900 text-sm">{reply.author}</span>
+                              <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                                reply.authorTrustScore >= 80 ? 'bg-green-100 text-green-800' :
+                                reply.authorTrustScore >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {reply.authorTrustScore}
+                              </span>
+                              <span className="ml-2 text-xs text-gray-500">{reply.timestamp}</span>
+                            </div>
+                            <p className="text-gray-800 text-sm mb-2">{reply.content}</p>
+                            <div className="flex items-center space-x-1">
+                              <button
+                                onClick={() => handleCommentVote(reply.id, 'up', true, comment.id)}
+                                className={`p-1 rounded transition-colors ${
+                                  reply.userVote === 'up' 
+                                    ? 'text-green-600 bg-green-50' 
+                                    : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                                }`}
+                              >
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                              <span className={`text-xs font-medium ${
+                                reply.votes > 0 ? 'text-green-600' : 
+                                reply.votes < 0 ? 'text-red-600' : 
+                                'text-gray-600'
+                              }`}>
+                                {reply.votes}
+                              </span>
+                              <button
+                                onClick={() => handleCommentVote(reply.id, 'down', true, comment.id)}
+                                className={`p-1 rounded transition-colors ${
+                                  reply.userVote === 'down' 
+                                    ? 'text-red-600 bg-red-50' 
+                                    : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                                }`}
+                              >
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white border-t border-gray-100 p-4">
+        <div className="flex space-x-3">
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a comment..."
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+          />
+          <button
+            onClick={handleAddComment}
+            disabled={!newComment.trim()}
+            className="bg-cyan-400 text-white px-4 py-2 rounded-lg font-medium hover:bg-cyan-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Post
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProfileScreen: React.FC<NavigationProps & { userId: string; }> = ({ onNavigate, userId }) => {
+  const [activeTab, setActiveTab] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [showPostEventReview, setShowPostEventReview] = useState(false);
+  const [reviewingEvent, setReviewingEvent] = useState<any>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchStart - touchEnd;
+    
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && activeTab < 2) {
+        setActiveTab(activeTab + 1);
+      } else if (diff < 0 && activeTab > 0) {
+        setActiveTab(activeTab - 1);
+      }
+    }
+    setTouchStart(0);
+  };
+
+  const userPosts = [
+    {
+      id: '1',
+      reviewedPerson: 'Jessica Wong',
+      content: 'Great project manager! Jessica helped coordinate our agency collaboration and was incredibly organized. Always responded quickly and kept everyone on track.',
+      timestamp: '2 days ago',
+      votes: 18,
+      comments: 5,
+      category: 'Professional'
+    },
+    {
+      id: '2',
+      reviewedPerson: 'Rachel Brown',
+      content: 'Excellent childcare! Rachel watched our daughter for date night and was fantastic. Bedtime routine went smoothly and she sent photo updates.',
+      timestamp: '5 days ago',
+      votes: 24,
+      comments: 3,
+      category: 'Childcare'
+    }
+  ];
+
+  const userInteractions = [
+    {
+      id: '1',
+      type: 'upvoted',
+      reviewer: 'Mike Johnson',
+      reviewedPerson: 'Emma Davis',
+      content: 'Honest marketplace seller! Mike bought my gaming laptop and I was completely upfront about the minor scratches...',
+      timestamp: '1 day ago',
+      icon: '↑',
+      iconColor: 'text-green-600'
+    },
+    {
+      id: '2',
+      type: 'commented',
+      reviewer: 'Sarah Chen',
+      reviewedPerson: 'Alex Martinez',
+      content: 'Amazing study partner! Alex and I prepared for the CPA exam together and his motivation kept me going...',
+      timestamp: '3 days ago',
+      icon: '💬',
+      iconColor: 'text-blue-600'
+    },
+    {
+      id: '3',
+      type: 'downvoted',
+      reviewer: 'Tom Anderson',
+      reviewedPerson: 'Kevin Lee',
+      content: 'Poor professional follow-through. Kevin asked for help with his resume, I spent hours on it, then he ghosted...',
+      timestamp: '1 week ago',
+      icon: '↓',
+      iconColor: 'text-red-600'
+    }
+  ];
+
+  const socialPlatforms = [
+    { name: 'LinkedIn', verified: true, username: '@riesling-lefluuf', icon: '💼' },
+    { name: 'Instagram', verified: true, username: '@bigstinky', icon: '📷' },
+    { name: 'Twitter', verified: false, username: '@bigstinky_x', icon: '🐦' },
+    { name: 'Facebook', verified: true, username: 'riesling.lefluuf', icon: '📘' },
+    { name: 'TikTok', verified: false, username: '@bigstinky_tiktok', icon: '🎵' },
+    { name: 'Snapchat', verified: true, username: 'bigstinky_snap', icon: '👻' },
+    { name: 'YouTube', verified: false, username: 'BigStinkyChannel', icon: '📺' },
+    { name: 'Discord', verified: true, username: 'BigStinky#1234', icon: '🎮' },
+    { name: 'Reddit', verified: false, username: 'u/BigStinky_Reddit', icon: '🔗' },
+    { name: 'Twitch', verified: false, username: 'BigStinkyStream', icon: '🟣' },
+    { name: 'Pinterest', verified: true, username: '@bigstinky_pins', icon: '📌' },
+    { name: 'GitHub', verified: true, username: 'bigstinky-dev', icon: '⚡' },
+    { name: 'Spotify', verified: false, username: 'bigstinky_music', icon: '🎶' },
+    { name: 'Venmo', verified: true, username: '@BigStinky-Pay', icon: '💰' },
+    { name: 'PayPal', verified: true, username: 'riesling.payments', icon: '💳' }
+  ];
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden" style={{backgroundColor: '#06b6d4'}}>
+      <div className="px-4 pt-4 pb-4">
+        {/* Profile Header */}
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-start">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mr-3">
+              <span className="text-2xl">🍷</span>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-white">Riesling Lefluuf</h2>
+              <p className="text-white text-sm">@BigStinky</p>
+              <div className="bg-white bg-opacity-90 rounded-lg p-2 mt-2">
+                <p className="text-gray-800 text-sm">
+                  Wine enthusiast 🍷 | Risk management professional | Coffee date advocate ☕
+                </p>
+              </div>
+            </div>
+          </div>
+          <button 
+            onClick={() => onNavigate('friends')}
+            className="bg-white px-3 py-2 rounded-lg text-sm font-medium"
+            style={{color: '#0891b2'}}
+          >
+            Friends
+          </button>
+        </div>
+
+        {/* Trust Score */}
+        <div className="bg-white bg-opacity-90 rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-900 font-medium">Trust Score</span>
+            <span className="text-gray-900 font-bold">84 / 100</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="h-2 rounded-full" style={{width: '84%', backgroundColor: '#06b6d4'}}></div>
+          </div>
+        </div>
+
+        {/* Personality Tags */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {['Authentic', 'Professional', 'Reliable', 'Creative', 'Trustworthy'].map((tag) => (
+            <span key={tag} className="bg-white bg-opacity-90 px-2 py-1 rounded-full text-xs font-medium" style={{color: '#0891b2'}}>
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        {/* Connected Platforms */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-white font-medium">Connected Platforms</h3>
+            <button 
+              onClick={() => onNavigate('platforms')}
+              className="text-white text-sm font-medium hover:text-gray-200 transition-colors"
+            >
+              View All ({socialPlatforms.length})
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {socialPlatforms.slice(0, 5).map((platform, index) => (
+              <div key={index} className="bg-white bg-opacity-90 rounded-lg p-2 min-w-[60px] text-center relative">
+                <div className="text-lg mb-1">{platform.icon}</div>
+                <div className="text-gray-900 text-xs font-medium">{platform.name}</div>
+                {platform.verified && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Content Tabs */}
+      <div className="flex-1 bg-white rounded-t-3xl overflow-hidden">
+        <div className="flex border-b border-gray-200">
+          {['POSTS', 'GROUPS', 'LIKES'].map((tab, index) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(index)}
+              className={`flex-1 py-4 text-sm font-medium ${
+                activeTab === index
+                  ? 'border-b-2'
+                  : 'text-gray-500'
+              }`}
+              style={activeTab === index ? {color: '#0891b2', borderBottomColor: '#0891b2'} : {}}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <div 
+          className="flex-1 overflow-hidden"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div 
+            className="flex h-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${activeTab * 100}%)` }}
+          >
+            <div className="w-full flex-shrink-0 overflow-y-auto p-4" style={{ minWidth: '393px' }}>
+              <div className="space-y-4">
+                {userPosts.map((post) => (
+                  <div key={post.id} className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center mb-2">
+                      <span className="text-sm text-gray-600">You reviewed </span>
+                      <span className="text-sm font-medium text-blue-600 ml-1">{post.reviewedPerson}</span>
+                    </div>
+                    <p className="text-gray-800 text-sm mb-3 leading-relaxed">{post.content}</p>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className="flex items-center space-x-4">
+                        <span>{post.timestamp}</span>
+                        <span className="px-2 py-1 bg-gray-200 text-gray-600 rounded">{post.category}</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <span className="flex items-center">
+                          <span className="text-green-600 mr-1">↑</span>
+                          {post.votes}
+                        </span>
+                        <span className="flex items-center">
+                          <span className="text-blue-600 mr-1">💬</span>
+                          {post.comments}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="w-full flex-shrink-0 overflow-y-auto p-4" style={{ minWidth: '393px' }}>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-semibold text-gray-900">Upcoming Events</h3>
+                </div>
+                {[
+                  { id: 1, title: 'Weekend Hiking Group', date: '2024-06-15', status: 'Going', category: 'sports' },
+                  { id: 2, title: 'Photography Meetup', date: '2024-06-20', status: 'Maybe', category: 'arts' },
+                  { id: 3, title: 'Book Club Discussion', date: '2024-06-25', status: 'Going', category: 'educational' }
+                ].map((event) => (
+                  <div key={event.id} className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm text-gray-900">{event.title}</h4>
+                        <p className="text-xs text-gray-500 mt-1">{event.date}</p>
+                        <span className="inline-block mt-2 px-2 py-1 rounded-full text-xs bg-cyan-100 text-cyan-800">
+                          {event.category}
+                        </span>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        event.status === 'Going' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {event.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                
+                <div className="flex justify-between items-center mb-4 mt-6">
+                  <h3 className="font-semibold text-gray-900">Past Events</h3>
+                </div>
+                {[
+                  { id: 4, title: 'Coffee Meetup Downtown', date: '2024-05-20', status: 'Attended', category: 'social' },
+                  { id: 5, title: 'Art Gallery Opening', date: '2024-05-15', status: 'Attended', category: 'arts' },
+                  { id: 6, title: 'Tech Conference 2024', date: '2024-05-10', status: 'Attended', category: 'professional' }
+                ].map((event) => (
+                  <div key={event.id} className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm text-gray-900">{event.title}</h4>
+                        <p className="text-xs text-gray-500 mt-1">{event.date}</p>
+                        <span className="inline-block mt-2 px-2 py-1 rounded-full text-xs bg-gray-200 text-gray-700">
+                          {event.category}
+                        </span>
+                      </div>
+                      <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                        {event.status}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <button 
+                        onClick={() => {
+                          setReviewingEvent(event);
+                          setShowPostEventReview(true);
+                        }}
+                        className="flex-1 bg-green-500 text-white py-1 rounded text-xs hover:bg-green-600 transition-colors"
+                      >
+                        Review Event
+                      </button>
+                      <button className="flex-1 bg-gray-400 text-white py-1 rounded text-xs hover:bg-gray-500 transition-colors">
+                        Share
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="w-full flex-shrink-0 overflow-y-auto p-4" style={{ minWidth: '393px' }}>
+              <div className="space-y-4">
+                {userInteractions.map((interaction) => (
+                  <div key={interaction.id} className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center mb-2">
+                      <span className={`text-lg mr-2 ${interaction.iconColor}`}>{interaction.icon}</span>
+                      <span className="text-sm text-gray-600">You {interaction.type} </span>
+                      <span className="text-sm font-medium text-gray-900 ml-1">{interaction.reviewer}&apos;s</span>
+                      <span className="text-sm text-gray-600 ml-1"> review of </span>
+                      <span className="text-sm font-medium text-blue-600 ml-1">{interaction.reviewedPerson}</span>
+                    </div>
+                    <p className="text-gray-800 text-sm mb-3 leading-relaxed">{interaction.content}</p>
+                    <div className="text-xs text-gray-500">{interaction.timestamp}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Post-Event Review Modal */}
+      {showPostEventReview && reviewingEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-[120]">
+          <div className="bg-white rounded-lg p-4 w-full max-w-sm max-h-[75vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Event Review</h2>
+              <button onClick={() => setShowPostEventReview(false)} className="text-gray-400 text-xl">×</button>
+            </div>
+            
+            <div className="text-center mb-6">
+              <div className="text-4xl mb-2">🎉</div>
+              <h3 className="font-bold text-lg text-gray-900 mb-2">{reviewingEvent.title}</h3>
+              <p className="text-sm text-gray-600">How was your experience?</p>
+            </div>
+            
+            {/* Event Rating */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Rate this event</label>
+              <div className="flex justify-center space-x-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button key={star} className="text-2xl text-yellow-400 hover:text-yellow-500">
+                    ⭐
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Review Text */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Your review</label>
+              <textarea 
+                placeholder="Share your experience with other users..."
+                rows={4}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              />
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPostEventReview(false)}
+                className="flex-1 bg-gray-500 text-white py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors"
+              >
+                Skip
+              </button>
+              <button 
+                onClick={() => {
+                  console.log('Submitting event review');
+                  setShowPostEventReview(false);
+                  setReviewingEvent(null);
+                }}
+                className="flex-1 bg-cyan-400 text-white py-2 rounded-lg font-medium hover:bg-cyan-500 transition-colors"
+              >
+                Submit Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const FriendsPage: React.FC<NavigationProps> = ({ onNavigate }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const friends: User[] = [
+    { id: '1', name: 'Jessica Wong', username: '@jessicaw', trustScore: 95, avatar: '👩🏻‍💼' },
+    { id: '2', name: 'Mike Johnson', username: '@mikej', trustScore: 92, avatar: '👨🏽‍🎨' },
+    { id: '3', name: 'Alex Martinez', username: '@alexm', trustScore: 89, avatar: '👨🏻‍🎓' },
+    { id: '4', name: 'Sarah Chen', username: '@sarahc', trustScore: 89, avatar: '👩🏻‍🎤' },
+    { id: '5', name: 'David Kim', username: '@davidk', trustScore: 85, avatar: '👨🏻‍💻' },
+    { id: '6', name: 'Rachel Brown', username: '@rachelb', trustScore: 82, avatar: '👩🏽‍🏫' },
+    { id: '7', name: 'Emma Davis', username: '@emmad', trustScore: 78, avatar: '👩🏻‍🔬' },
+    { id: '8', name: 'Nina Patel', username: '@ninap', trustScore: 74, avatar: '👩🏽‍⚕️' },
+    { id: '9', name: 'Tom Anderson', username: '@toma', trustScore: 67, avatar: '👨🏻‍💼' }
+  ];
+
+  const filteredFriends = friends.filter(friend => 
+    friend.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    friend.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getTrustScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600 bg-green-100';
+    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
+    return 'text-red-600 bg-red-100';
+  };
+
+  return (
+    <div className="bg-gray-50 h-full flex flex-col overflow-hidden">
+      <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between mb-4">
+          <button 
+            onClick={() => onNavigate('profile')}
+            className="text-blue-600 font-medium"
+          >
+            Back
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900">Friends</h1>
+          <button className="text-blue-600 font-medium">
+            Add
+          </button>
+        </div>
+        
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search friends..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          />
+          <span className="absolute right-3 top-2.5 text-gray-400">🔍</span>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4">
+          <div className="mb-4">
+            <h2 className="text-sm font-medium text-gray-500 mb-2">MY FRIENDS ({friends.length})</h2>
+          </div>
+          
+          <div className="space-y-3">
+            {filteredFriends.map((friend) => (
+              <div 
+                key={friend.id}
+                className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center flex-1">
+                    <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-xl">{friend.avatar}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900">{friend.name}</h3>
+                      <p className="text-sm text-gray-500">{friend.username}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTrustScoreColor(friend.trustScore)}`}>
+                      {friend.trustScore}
+                    </span>
+                    <button className="text-gray-400 hover:text-gray-600">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {filteredFriends.length === 0 && (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-2">👥</div>
+              <p className="text-gray-500">No friends found</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ConnectedPlatformsPage: React.FC<NavigationProps> = ({ onNavigate }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const socialPlatforms = [
+    { name: 'LinkedIn', verified: true, username: '@riesling-lefluuf', icon: '💼', category: 'Professional' },
+    { name: 'Instagram', verified: true, username: '@bigstinky', icon: '📷', category: 'Social Media' },
+    { name: 'Twitter', verified: false, username: '@bigstinky_x', icon: '🐦', category: 'Social Media' },
+    { name: 'Facebook', verified: true, username: 'riesling.lefluuf', icon: '📘', category: 'Social Media' },
+    { name: 'TikTok', verified: false, username: '@bigstinky_tiktok', icon: '🎵', category: 'Social Media' },
+    { name: 'Snapchat', verified: true, username: 'bigstinky_snap', icon: '👻', category: 'Social Media' },
+    { name: 'YouTube', verified: false, username: 'BigStinkyChannel', icon: '📺', category: 'Content' },
+    { name: 'Discord', verified: true, username: 'BigStinky#1234', icon: '🎮', category: 'Gaming' },
+    { name: 'Reddit', verified: false, username: 'u/BigStinky_Reddit', icon: '🔗', category: 'Social Media' },
+    { name: 'Twitch', verified: false, username: 'BigStinkyStream', icon: '🟣', category: 'Gaming' },
+    { name: 'Pinterest', verified: true, username: '@bigstinky_pins', icon: '📌', category: 'Content' },
+    { name: 'GitHub', verified: true, username: 'bigstinky-dev', icon: '⚡', category: 'Professional' },
+    { name: 'Spotify', verified: false, username: 'bigstinky_music', icon: '🎶', category: 'Entertainment' },
+    { name: 'Venmo', verified: true, username: '@BigStinky-Pay', icon: '💰', category: 'Payment' },
+    { name: 'PayPal', verified: true, username: 'riesling.payments', icon: '💳', category: 'Payment' }
+  ];
+
+  const filteredPlatforms = socialPlatforms.filter(platform => 
+    platform.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    platform.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    platform.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const verifiedCount = socialPlatforms.filter(p => p.verified).length;
+  const unverifiedCount = socialPlatforms.length - verifiedCount;
+
+  const groupedPlatforms = filteredPlatforms.reduce((groups, platform) => {
+    const category = platform.category;
+    if (!groups[category]) {
+      groups[category] = [];
+    }
+    groups[category].push(platform);
+    return groups;
+  }, {} as Record<string, typeof socialPlatforms>);
+
+  return (
+    <div className="bg-gray-50 h-full flex flex-col overflow-hidden">
+      <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between mb-4">
+          <button 
+            onClick={() => onNavigate('profile')}
+            className="text-blue-600 font-medium"
+          >
+            Back
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900">Connected Platforms</h1>
+          <button 
+            onClick={() => onNavigate('addplatform')}
+            className="text-blue-600 font-medium"
+          >
+            Add
+          </button>
+        </div>
+        
+        <div className="relative mb-4">
+          <input
+            type="text"
+            placeholder="Search platforms..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          />
+          <span className="absolute right-3 top-2.5 text-gray-400">🔍</span>
+        </div>
+
+        <div className="flex justify-around bg-gray-50 rounded-lg p-3">
+          <div className="text-center">
+            <div className="text-lg font-bold text-green-600">{verifiedCount}</div>
+            <div className="text-xs text-gray-600">Verified</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-orange-600">{unverifiedCount}</div>
+            <div className="text-xs text-gray-600">Pending</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-blue-600">{socialPlatforms.length}</div>
+            <div className="text-xs text-gray-600">Total</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4">
+          {Object.entries(groupedPlatforms).map(([category, platforms]) => (
+            <div key={category} className="mb-6">
+              <h2 className="text-sm font-medium text-gray-500 mb-3 uppercase tracking-wide">
+                {category} ({platforms.length})
+              </h2>
+              
+              <div className="space-y-3">
+                {platforms.map((platform, index) => (
+                  <div 
+                    key={index}
+                    className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center flex-1">
+                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                          <span className="text-2xl">{platform.icon}</span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <h3 className="font-medium text-gray-900 mr-2">{platform.name}</h3>
+                            {platform.verified ? (
+                              <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500">{platform.username}</p>
+                          <p className="text-xs text-gray-400">
+                            {platform.verified ? 'Verified' : 'Pending verification'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                          {platform.verified ? 'View' : 'Verify'}
+                        </button>
+                        <button className="text-gray-400 hover:text-gray-600">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          
+          {filteredPlatforms.length === 0 && (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-2">🔗</div>
+              <p className="text-gray-500">No platforms found</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AddPlatformPage: React.FC<NavigationProps> = ({ onNavigate }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPlatform, setSelectedPlatform] = useState<any>(null);
+  const [username, setUsername] = useState('');
+  const [showVerificationStep, setShowVerificationStep] = useState(false);
+  
+  const availablePlatforms = [
+    // Social Media
+    { name: 'Instagram', icon: '📷', category: 'Social Media', placeholder: '@username' },
+    { name: 'Twitter/X', icon: '🐦', category: 'Social Media', placeholder: '@username' },
+    { name: 'Facebook', icon: '📘', category: 'Social Media', placeholder: 'facebook.com/username' },
+    { name: 'TikTok', icon: '🎵', category: 'Social Media', placeholder: '@username' },
+    { name: 'Snapchat', icon: '👻', category: 'Social Media', placeholder: '@username' },
+    { name: 'Reddit', icon: '🔗', category: 'Social Media', placeholder: 'u/username' },
+    
+    // Professional
+    { name: 'LinkedIn', icon: '💼', category: 'Professional', placeholder: 'linkedin.com/in/username' },
+    { name: 'GitHub', icon: '⚡', category: 'Professional', placeholder: 'github.com/username' },
+    { name: 'AngelList', icon: '👼', category: 'Professional', placeholder: 'angel.co/username' },
+    
+    // Content & Creative
+    { name: 'YouTube', icon: '📺', category: 'Content', placeholder: 'youtube.com/@username' },
+    { name: 'Pinterest', icon: '📌', category: 'Content', placeholder: '@username' },
+    { name: 'Behance', icon: '🎨', category: 'Content', placeholder: 'behance.net/username' },
+    { name: 'Dribbble', icon: '🏀', category: 'Content', placeholder: 'dribbble.com/username' },
+    
+    // Gaming & Entertainment
+    { name: 'Discord', icon: '🎮', category: 'Gaming', placeholder: 'Username#1234' },
+    { name: 'Twitch', icon: '🟣', category: 'Gaming', placeholder: 'twitch.tv/username' },
+    { name: 'Steam', icon: '🎮', category: 'Gaming', placeholder: 'steamcommunity.com/id/username' },
+    
+    // Music & Entertainment
+    { name: 'Spotify', icon: '🎶', category: 'Entertainment', placeholder: 'Spotify username' },
+    { name: 'SoundCloud', icon: '🔊', category: 'Entertainment', placeholder: 'soundcloud.com/username' },
+    
+    // Payment & Finance
+    { name: 'Venmo', icon: '💰', category: 'Payment', placeholder: '@username' },
+    { name: 'PayPal', icon: '💳', category: 'Payment', placeholder: 'paypal.me/username' },
+    { name: 'CashApp', icon: '💵', category: 'Payment', placeholder: '$username' },
+    
+    // Dating & Social
+    { name: 'Bumble', icon: '💛', category: 'Dating', placeholder: 'Profile verification' },
+    { name: 'Hinge', icon: '💕', category: 'Dating', placeholder: 'Profile verification' },
+    { name: 'Tinder', icon: '🔥', category: 'Dating', placeholder: 'Profile verification' },
+    
+    // Other
+    { name: 'WhatsApp', icon: '💬', category: 'Messaging', placeholder: 'Phone number' },
+    { name: 'Telegram', icon: '✈️', category: 'Messaging', placeholder: '@username' },
+    
+    // Business & Productivity
+    { name: 'Slack', icon: '💼', category: 'Business', placeholder: 'workspace.slack.com' },
+    { name: 'Zoom', icon: '📹', category: 'Business', placeholder: 'zoom.us/profile' },
+    { name: 'Microsoft Teams', icon: '👥', category: 'Business', placeholder: 'teams.microsoft.com' },
+    
+    // Creative & Design
+    { name: 'Figma', icon: '🎨', category: 'Design', placeholder: 'figma.com/@username' },
+    { name: 'Adobe Portfolio', icon: '🎭', category: 'Design', placeholder: 'portfolio.adobe.com/username' },
+    
+    // Fitness & Health
+    { name: 'Strava', icon: '🏃', category: 'Fitness', placeholder: 'strava.com/athletes/username' },
+    { name: 'MyFitnessPal', icon: '💪', category: 'Fitness', placeholder: 'myfitnesspal.com/profile/username' }
+  ];
+
+  const filteredPlatforms = availablePlatforms.filter(platform => 
+    platform.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    platform.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const groupedPlatforms = filteredPlatforms.reduce((groups, platform) => {
+    const category = platform.category;
+    if (!groups[category]) {
+      groups[category] = [];
+    }
+    groups[category].push(platform);
+    return groups;
+  }, {} as Record<string, typeof availablePlatforms>);
+
+  const handlePlatformSelect = (platform: any) => {
+    setSelectedPlatform(platform);
+    setUsername('');
+    setShowVerificationStep(false);
+  };
+
+  const handleContinueVerification = () => {
+    if (!username.trim()) {
+      alert('Please enter your username/profile URL');
+      return;
+    }
+    setShowVerificationStep(true);
+  };
+
+  const handleCompleteVerification = () => {
+    // Here you would typically send the verification request to your backend
+    alert(`Verification request sent for ${selectedPlatform.name}! You'll receive a notification when it's complete.`);
+    onNavigate('platforms');
+  };
+
+  if (selectedPlatform && showVerificationStep) {
+    return (
+      <div className="bg-gray-50 h-full flex flex-col overflow-hidden">
+        <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between mb-4">
+            <button 
+              onClick={() => setShowVerificationStep(false)}
+              className="text-blue-600 font-medium"
+            >
+              Back
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">Verify {selectedPlatform.name}</h1>
+            <div></div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-sm mx-auto">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">{selectedPlatform.icon}</span>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Verify Your {selectedPlatform.name}</h2>
+              <p className="text-gray-600 text-sm">Username: {username}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h3 className="font-medium text-yellow-800 mb-2">🔍 Verification Steps:</h3>
+                <ol className="text-sm text-yellow-700 space-y-1">
+                  <li>1. We&apos;ll check if this profile exists and is public</li>
+                  <li>2. You may need to post a verification code</li>
+                  <li>3. Verification typically takes 5-10 minutes</li>
+                </ol>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-medium text-blue-800 mb-2">✅ Trust Score Benefits:</h3>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• +5 Trust Score for each verified platform</li>
+                  <li>• Enhanced profile credibility</li>
+                  <li>• Access to verified user features</li>
+                </ul>
+              </div>
+
+              <button 
+                onClick={handleCompleteVerification}
+                className="w-full bg-cyan-500 text-white py-3 rounded-lg font-medium hover:bg-cyan-600 transition-colors"
+              >
+                Start Verification
+              </button>
+
+              <button 
+                onClick={() => setSelectedPlatform(null)}
+                className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedPlatform) {
+    return (
+      <div className="bg-gray-50 h-full flex flex-col overflow-hidden">
+        <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between mb-4">
+            <button 
+              onClick={() => setSelectedPlatform(null)}
+              className="text-blue-600 font-medium"
+            >
+              Back
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">Add {selectedPlatform.name}</h1>
+            <div></div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-sm mx-auto">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">{selectedPlatform.icon}</span>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">{selectedPlatform.name}</h2>
+              <p className="text-gray-600 text-sm">{selectedPlatform.category}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Username or Profile URL
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={selectedPlatform.placeholder}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-medium text-gray-800 mb-2">💡 Tips:</h3>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• Use your exact username or profile URL</li>
+                  <li>• Check spelling carefully</li>
+                </ul>
+              </div>
+
+              <button 
+                onClick={handleContinueVerification}
+                disabled={!username.trim()}
+                className="w-full bg-cyan-500 text-white py-3 rounded-lg font-medium hover:bg-cyan-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Continue to Verification
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-50 h-full flex flex-col overflow-hidden">
+      <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between mb-4">
+          <button 
+            onClick={() => onNavigate('platforms')}
+            className="text-blue-600 font-medium"
+          >
+            Back
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900">Add Platform</h1>
+          <div></div>
+        </div>
+        
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search platforms..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          />
+          <span className="absolute right-3 top-2.5 text-gray-400">🔍</span>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4">
+          {/* Popular Platforms Section */}
+          {searchTerm === '' && (
+            <div className="mb-6">
+              <h2 className="text-sm font-medium text-gray-500 mb-3 uppercase tracking-wide">
+                ⭐ Popular Platforms (6)
+              </h2>
+              
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { name: 'Instagram', icon: '📷', category: 'Social Media', placeholder: '@username' },
+                  { name: 'LinkedIn', icon: '💼', category: 'Professional', placeholder: 'linkedin.com/in/username' },
+                  { name: 'Twitter/X', icon: '🐦', category: 'Social Media', placeholder: '@username' },
+                  { name: 'TikTok', icon: '🎵', category: 'Social Media', placeholder: '@username' },
+                  { name: 'GitHub', icon: '⚡', category: 'Professional', placeholder: 'github.com/username' },
+                  { name: 'YouTube', icon: '📺', category: 'Content', placeholder: 'youtube.com/@username' }
+                ].map((platform, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handlePlatformSelect(platform)}
+                    className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-3 shadow-sm border border-cyan-200 hover:border-cyan-300 hover:shadow-md transition-all text-left"
+                  >
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center mb-2 shadow-sm">
+                        <span className="text-xl">{platform.icon}</span>
+                      </div>
+                      <h3 className="font-medium text-gray-900 text-xs">{platform.name}</h3>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {Object.entries(groupedPlatforms).map(([category, platforms]) => (
+            <div key={category} className="mb-6">
+              <h2 className="text-sm font-medium text-gray-500 mb-3 uppercase tracking-wide">
+                {category} ({platforms.length})
+              </h2>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {platforms.map((platform, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handlePlatformSelect(platform)}
+                    className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:border-cyan-300 hover:shadow-md transition-all text-left"
+                  >
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+                        <span className="text-2xl">{platform.icon}</span>
+                      </div>
+                      <h3 className="font-medium text-gray-900 text-sm">{platform.name}</h3>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          
+          {filteredPlatforms.length === 0 && (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-2">🔍</div>
+              <p className="text-gray-500">No platforms found</p>
+              <p className="text-sm text-gray-400 mt-2">Try searching for a different platform</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PlaceholderScreen: React.FC<{ title: string; } & NavigationProps> = ({ title, onNavigate }) => {
+  return (
+    <div className="bg-gray-50 h-full flex flex-col items-center justify-center p-8">
+      <div className="text-6xl mb-4">🚧</div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
+      <p className="text-gray-600 text-center mb-6">This feature is coming soon!</p>
+      <button 
+        onClick={() => onNavigate('home')}
+        className="bg-cyan-400 text-white px-6 py-3 rounded-lg font-medium hover:bg-cyan-500 transition-colors"
+      >
+        Back to Home
+      </button>
+    </div>
+  );
+};
+
+const GroupsScreen: React.FC<NavigationProps> = ({ onNavigate }) => {
+  const [events, setEvents] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [showCreateForm, setShowCreateForm] = React.useState(false);
+  const [userLocation, setUserLocation] = React.useState<[number, number] | null>(null);
+  const [activeTab, setActiveTab] = React.useState('upcoming');
+  const [eventsTab, setEventsTab] = React.useState('upcoming');
+  const [viewMode, setViewMode] = React.useState('list'); // 'list' or 'map'
+  const [filterRadius, setFilterRadius] = React.useState(5); // miles
+  const [filterCategory, setFilterCategory] = React.useState('');
+  const [filterTrustScore, setFilterTrustScore] = React.useState(0);
+  const [selectedEvent, setSelectedEvent] = React.useState<any>(null);
+  const [userTrustScore] = React.useState(85); // Mock user trust score
+  const [createFormData, setCreateFormData] = React.useState({
+    title: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    address: '',
+    category: 'social',
+    privacy: 'public',
+    capacity: 50,
+    trustScoreMin: 50,
+    enforceTrustScore: false
+  });
+  const [showPostEventReview, setShowPostEventReview] = React.useState(false);
+  const [reviewingEvent, setReviewingEvent] = React.useState<any>(null);
+  const [invitedFriends, setInvitedFriends] = React.useState<string[]>([]);
+  const [showFriendsSelector, setShowFriendsSelector] = React.useState(false);
+  
+  // Demo friends data
+  const demoFriends = [
+    { id: '1', name: 'Jessica Wong', username: '@jessicaw', trustScore: 95 },
+    { id: '2', name: 'Mike Johnson', username: '@mikej', trustScore: 92 },
+    { id: '3', name: 'Alex Martinez', username: '@alexm', trustScore: 89 },
+    { id: '4', name: 'Sarah Chen', username: '@sarahc', trustScore: 89 },
+    { id: '5', name: 'David Kim', username: '@davidk', trustScore: 85 },
+    { id: '6', name: 'Rachel Brown', username: '@rachelb', trustScore: 82 }
+  ];
+
+  // Get user location and fetch events
+  React.useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords: [number, number] = [position.coords.latitude, position.coords.longitude];
+          setUserLocation(coords);
+          fetchEvents(coords[0], coords[1]);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          // Fallback to NYC
+          fetchEvents(40.7128, -74.0060);
+        }
+      );
+    }
+  }, []);
+
+  const fetchEvents = async (lat: number, lng: number) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token') || 'demo-token';
+      const response = await fetch(`/api/events/map?lat=${lat}&lng=${lng}&radius=5000`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setEvents(data.events || []);
+      } else {
+        console.log('Using demo events - authentication required for real data');
+        // Enhanced demo events for filtering showcase
+        setEvents([
+          {
+            id: 'demo1',
+            title: 'NETWORKING HAPPY HOUR',
+            startDate: new Date(Date.now() + 86400000).toISOString(),
+            category: 'professional',
+            organizer: { firstName: 'Sarah', lastName: 'Wilson', trustScore: { current: 87 } },
+            goingCount: 12,
+            address: 'Downtown Phoenix'
+          },
+          {
+            id: 'demo2', 
+            title: 'WEEKEND HIKING GROUP',
+            startDate: new Date(Date.now() + 172800000).toISOString(),
+            category: 'sports',
+            organizer: { firstName: 'Mike', lastName: 'Chen', trustScore: { current: 92 } },
+            goingCount: 8,
+            address: 'South Mountain'
+          },
+          {
+            id: 'demo3',
+            title: 'COFFEE & CODE MEETUP',
+            startDate: new Date(Date.now() + 259200000).toISOString(),
+            category: 'professional',
+            organizer: { firstName: 'Alex', lastName: 'Rodriguez', trustScore: { current: 76 } },
+            goingCount: 15,
+            address: 'Central Phoenix'
+          },
+          {
+            id: 'demo4',
+            title: 'ART GALLERY OPENING',
+            startDate: new Date(Date.now() + 345600000).toISOString(),
+            category: 'arts',
+            organizer: { firstName: 'Emma', lastName: 'Davis', trustScore: { current: 94 } },
+            goingCount: 25,
+            address: 'Arts District'
+          },
+          {
+            id: 'demo5',
+            title: 'TRIVIA NIGHT',
+            startDate: new Date(Date.now() + 432000000).toISOString(),
+            category: 'social',
+            organizer: { firstName: 'Jamie', lastName: 'Thompson', trustScore: { current: 68 } },
+            goingCount: 18,
+            address: 'Local Sports Bar'
+          },
+          {
+            id: 'demo6',
+            title: 'YOGA IN THE PARK',
+            startDate: new Date(Date.now() + 518400000).toISOString(),
+            category: 'sports',
+            organizer: { firstName: 'Lisa', lastName: 'Park', trustScore: { current: 89 } },
+            goingCount: 22,
+            address: 'Steele Indian School Park'
+          },
+          {
+            id: 'demo7',
+            title: 'PHOTOGRAPHY WORKSHOP',
+            startDate: new Date(Date.now() + 604800000).toISOString(),
+            category: 'educational',
+            organizer: { firstName: 'David', lastName: 'Kim', trustScore: { current: 85 } },
+            goingCount: 10,
+            address: 'Phoenix Art Museum'
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRSVP = async (eventId: string, status: 'going' | 'maybe' | 'not-going') => {
+    try {
+      const token = localStorage.getItem('token') || 'demo-token';
+      const response = await fetch(`/api/events/${eventId}/rsvp`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (response.ok) {
+        console.log(`RSVP ${status} successful`);
+        // Refresh events
+        if (userLocation) {
+          fetchEvents(userLocation[0], userLocation[1]);
+        }
+      } else {
+        console.log(`Demo RSVP: ${status} for event ${eventId}`);
+      }
+    } catch (error) {
+      console.error('RSVP error:', error);
+    }
+  };
+
+  const formatEventDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return {
+      day: date.getDate().toString(),
+      month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+    };
+  };
+
+  return (
+    <div className="h-full flex flex-col" style={{background: 'linear-gradient(135deg, #f0fdff 0%, #e0f7fa 50%, #b2dfdb 100%)'}}>
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-cyan-300 flex-shrink-0 shadow-lg" style={{background: 'linear-gradient(135deg, #0891b2 0%, #0e7490 20%, #155e75 100%)'}}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+              <span className="text-xl">👥</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white drop-shadow-md">Groups</h1>
+              <p className="text-xs text-cyan-100 opacity-90">Discover local events</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setShowCreateForm(true)}
+            className="w-12 h-12 bg-white shadow-lg border-2 border-cyan-100 rounded-xl flex items-center justify-center text-cyan-600 text-xl font-bold hover:bg-cyan-50 hover:text-cyan-700 transition-all duration-200 hover:scale-105"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="px-4 py-3 bg-white border-b border-gray-200">
+        <div className="flex space-x-2">
+          <button 
+            onClick={() => setActiveTab('upcoming')}
+            className={`px-4 py-2 rounded-full text-sm transition-colors ${
+              activeTab === 'upcoming' ? 'bg-cyan-400 text-white' : 'bg-gray-200 hover:bg-gray-300'
+            }`}
+          >
+            UPCOMING
+          </button>
+          <button 
+            onClick={() => setActiveTab('discover')}
+            className={`px-4 py-2 rounded-full text-sm transition-colors ${
+              activeTab === 'discover' ? 'bg-cyan-400 text-white' : 'bg-gray-200 hover:bg-gray-300'
+            }`}
+          >
+            DISCOVER
+          </button>
+          <button 
+            onClick={() => setActiveTab('my-events')}
+            className={`px-4 py-2 rounded-full text-sm transition-colors ${
+              activeTab === 'my-events' ? 'bg-cyan-400 text-white' : 'bg-gray-200 hover:bg-gray-300'
+            }`}
+          >
+            MY EVENTS
+          </button>
+        </div>
+      </div>
+
+      {/* Events List */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-3" style={{scrollbarWidth: 'thin', scrollbarColor: '#9CA3AF #F3F4F6'}}>
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto mb-2"></div>
+            <p className="text-gray-600 text-sm">Finding events near you...</p>
+          </div>
+        ) : (
+          <>
+            {/* Tab Content */}
+            {activeTab === 'upcoming' && (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-gray-900">UPCOMING EVENTS</h3>
+                  <span className="text-sm text-gray-500">📍 {userLocation ? 'Location found' : 'Using default'}</span>
+                </div>
+                
+                {events.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-6xl mb-4">📅</div>
+                    <p className="text-gray-600 mb-4">No upcoming events found</p>
+                    <button 
+                      onClick={() => setShowCreateForm(true)}
+                      className="bg-cyan-400 text-white px-6 py-2 rounded-full font-medium hover:bg-cyan-500 transition-colors"
+                    >
+                      Create First Event
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {events.map((event, index) => {
+                      const dateInfo = formatEventDate(event.startDate);
+                      return (
+                        <div key={event.id || index} className="rounded-lg shadow-md border border-cyan-200" style={{background: 'linear-gradient(145deg, #ffffff 0%, #f8fdff 100%)'}}>
+                          <div className="p-4">
+                            <div className="flex items-start mb-3">
+                              <div className="text-center mr-4">
+                                <div className="text-2xl font-bold text-cyan-600">{dateInfo.day}</div>
+                                <div className="text-sm text-cyan-500">{dateInfo.month}</div>
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-bold text-lg mb-1 text-gray-900">{event.title}</h4>
+                                <div className="flex items-center mb-1 text-sm text-gray-600">
+                                  <span className="mr-2">👤</span>
+                                  <span>By {event.organizer.firstName} {event.organizer.lastName}</span>
+                                  <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">
+                                    Trust: {event.organizer.trustScore.current}
+                                  </span>
+                                </div>
+                                <div className="flex items-center text-sm text-gray-600 mb-2">
+                                  <span className="mr-2">📍</span>
+                                  <span>{event.address}</span>
+                                </div>
+                                <div className="flex items-center text-sm text-gray-600">
+                                  <span className="mr-2">👥</span>
+                                  <span>{event.goingCount} going</span>
+                                  <span className="ml-4 bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs">
+                                    {event.category}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleRSVP(event.id, 'going')}
+                                className="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+                              >
+                                Going
+                              </button>
+                              <button
+                                onClick={() => handleRSVP(event.id, 'maybe')}
+                                className="flex-1 bg-yellow-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-yellow-600 transition-colors"
+                              >
+                                Maybe
+                              </button>
+                              <button
+                                onClick={() => handleRSVP(event.id, 'not-going')}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                              >
+                                Can&apos;t Go
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+            
+            {activeTab === 'discover' && (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-gray-900">DISCOVER EVENTS</h3>
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => setViewMode('list')}
+                      className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                        viewMode === 'list' ? 'bg-cyan-400 text-white' : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      LIST
+                    </button>
+                    <button 
+                      onClick={() => setViewMode('map')}
+                      className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                        viewMode === 'map' ? 'bg-cyan-400 text-white' : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      MAP
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Advanced Filters */}
+                <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                  <div className="flex flex-wrap gap-3 items-center">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-600">Distance:</span>
+                      <select 
+                        value={filterRadius}
+                        onChange={(e) => setFilterRadius(parseInt(e.target.value))}
+                        className="text-xs bg-white border rounded px-2 py-1"
+                      >
+                        <option value={1}>1 mile</option>
+                        <option value={5}>5 miles</option>
+                        <option value={10}>10 miles</option>
+                        <option value={25}>25 miles</option>
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-600">Category:</span>
+                      <select 
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        className="text-xs bg-white border rounded px-2 py-1"
+                      >
+                        <option value="">All</option>
+                        <option value="social">Social</option>
+                        <option value="professional">Professional</option>
+                        <option value="sports">Sports</option>
+                        <option value="arts">Arts</option>
+                        <option value="educational">Educational</option>
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-600">Min Trust:</span>
+                      <select 
+                        value={filterTrustScore}
+                        onChange={(e) => setFilterTrustScore(parseInt(e.target.value))}
+                        className="text-xs bg-white border rounded px-2 py-1"
+                      >
+                        <option value={0}>Any</option>
+                        <option value={50}>50+</option>
+                        <option value={70}>70+</option>
+                        <option value={85}>85+</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Map View */}
+                {viewMode === 'map' && (
+                  <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                    <div className="bg-white rounded-lg h-64 flex items-center justify-center border-2 border-dashed border-gray-300">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">🗺️</div>
+                        <h4 className="font-medium text-gray-700 mb-1">Interactive Map View</h4>
+                        <p className="text-sm text-gray-500">Event pins within {filterRadius} miles</p>
+                        <div className="mt-3 flex justify-center space-x-4">
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-red-500 rounded-full mr-1"></div>
+                            <span className="text-xs text-gray-600">Events</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-blue-500 rounded-full mr-1"></div>
+                            <span className="text-xs text-gray-600">Your Location</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Mock Event Pins */}
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {events.slice(0, 4).map((event, index) => (
+                        <div key={event.id || index} className="bg-white rounded p-2 border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+                             onClick={() => setSelectedEvent(event)}>
+                          <div className="flex items-center mb-1">
+                            <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                            <span className="text-xs font-medium text-gray-900 truncate">{event.title}</span>
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">{event.address}</div>
+                          <div className="text-xs text-cyan-600">{event.goingCount} going</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Event Details Modal */}
+                {selectedEvent && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-[115]"
+                       onClick={() => setSelectedEvent(null)}>
+                    <div className="bg-white rounded-lg p-4 w-full max-w-sm max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="font-bold text-lg text-gray-900">{selectedEvent.title}</h4>
+                        <button onClick={() => setSelectedEvent(null)} className="text-gray-400 text-xl">×</button>
+                      </div>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <span className="mr-2">👤</span>
+                          <span>By {selectedEvent.organizer.firstName} {selectedEvent.organizer.lastName}</span>
+                          <span className="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                            Trust: {selectedEvent.organizer.trustScore.current}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <span className="mr-2">📍</span>
+                          <span>{selectedEvent.address}</span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <span className="mr-2">👥</span>
+                          <span>{selectedEvent.goingCount} going</span>
+                          <span className="ml-4 bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full text-xs">
+                            {selectedEvent.category}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <span className="mr-2">📅</span>
+                          <span>{formatEventDate(selectedEvent.startDate).day} {formatEventDate(selectedEvent.startDate).month}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleRSVP(selectedEvent.id, 'going')}
+                          className="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+                        >
+                          Going
+                        </button>
+                        <button
+                          onClick={() => handleRSVP(selectedEvent.id, 'maybe')}
+                          className="flex-1 bg-yellow-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-yellow-600 transition-colors"
+                        >
+                          Maybe
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* List View */}
+                {viewMode === 'list' && (
+                  <div className="space-y-3">
+                    {events
+                      .filter(event => !filterCategory || event.category === filterCategory)
+                      .filter(event => event.organizer.trustScore.current >= filterTrustScore)
+                      .map((event, index) => {
+                        const dateInfo = formatEventDate(event.startDate);
+                        return (
+                          <div key={event.id || index} className="rounded-lg shadow-md border border-cyan-200" style={{background: 'linear-gradient(145deg, #ffffff 0%, #f8fdff 100%)'}}>
+                            <div className="p-4">
+                              <div className="flex items-start mb-3">
+                                <div className="text-center mr-4">
+                                  <div className="text-2xl font-bold text-cyan-600">{dateInfo.day}</div>
+                                  <div className="text-sm text-cyan-500">{dateInfo.month}</div>
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <h4 className="font-bold text-lg text-gray-900">{event.title}</h4>
+                                    <button 
+                                      onClick={() => setSelectedEvent(event)}
+                                      className="text-xs text-cyan-600 hover:text-cyan-700"
+                                    >
+                                      See More
+                                    </button>
+                                  </div>
+                                  <div className="flex items-center mb-1 text-sm text-gray-600">
+                                    <span className="mr-2">👤</span>
+                                    <span>By {event.organizer.firstName} {event.organizer.lastName}</span>
+                                    <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">
+                                      Trust: {event.organizer.trustScore.current}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center text-sm text-gray-600 mb-2">
+                                    <span className="mr-2">📍</span>
+                                    <span>{event.address}</span>
+                                    <span className="ml-2 text-xs text-gray-500">~{Math.round(Math.random() * filterRadius + 0.5)} mi</span>
+                                  </div>
+                                  <div className="flex items-center text-sm text-gray-600">
+                                    <span className="mr-2">👥</span>
+                                    <span>{event.goingCount} going</span>
+                                    <span className="ml-4 bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs">
+                                      {event.category}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleRSVP(event.id, 'going')}
+                                  className="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+                                >
+                                  Going
+                                </button>
+                                <button
+                                  onClick={() => handleRSVP(event.id, 'maybe')}
+                                  className="flex-1 bg-yellow-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-yellow-600 transition-colors"
+                                >
+                                  Maybe
+                                </button>
+                                <button
+                                  onClick={() => handleRSVP(event.id, 'not-going')}
+                                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                                >
+                                  Can&apos;t Go
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </>
+            )}
+            
+            {activeTab === 'my-events' && (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-gray-900">MY EVENTS</h3>
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => setEventsTab('upcoming')}
+                      className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                        eventsTab === 'upcoming' ? 'bg-cyan-400 text-white' : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      UPCOMING
+                    </button>
+                    <button 
+                      onClick={() => setEventsTab('past')}
+                      className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                        eventsTab === 'past' ? 'bg-cyan-400 text-white' : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      PAST
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  {eventsTab === 'upcoming' ? (
+                    <div className="text-center py-8">
+                      <div className="text-6xl mb-4">🎆</div>
+                      <p className="text-gray-600 mb-4">No upcoming events you&apos;re attending</p>
+                      <button 
+                        onClick={() => setActiveTab('discover')}
+                        className="bg-cyan-400 text-white px-6 py-2 rounded-full font-medium hover:bg-cyan-500 transition-colors"
+                      >
+                        Discover Events
+                      </button>
+                    </div>
+                  ) : (
+                    [
+                      { id: 1, title: 'Coffee Meetup Downtown', date: new Date('2024-05-20').toISOString(), status: 'Attended', category: 'social' },
+                      { id: 2, title: 'Art Gallery Opening', date: new Date('2024-05-15').toISOString(), status: 'Attended', category: 'arts' },
+                      { id: 3, title: 'Tech Conference 2024', date: new Date('2024-05-10').toISOString(), status: 'Attended', category: 'professional' },
+                      { id: 4, title: 'Photography Workshop', date: new Date('2024-05-05').toISOString(), status: 'Attended', category: 'educational' },
+                      { id: 5, title: 'Networking Happy Hour', date: new Date('2024-05-01').toISOString(), status: 'Attended', category: 'professional' }
+                    ].map((event) => {
+                      const dateInfo = formatEventDate(event.date);
+                      return (
+                        <div key={event.id} className="rounded-lg shadow-md border border-gray-200" style={{background: 'linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%)'}}>
+                          <div className="p-4">
+                            <div className="flex items-start mb-3">
+                              <div className="text-center mr-4">
+                                <div className="text-2xl font-bold text-gray-600">{dateInfo.day}</div>
+                                <div className="text-sm text-gray-500">{dateInfo.month}</div>
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-bold text-lg mb-1 text-gray-900">{event.title}</h4>
+                                <div className="flex items-center text-sm text-gray-600 mb-2">
+                                  <span className="mr-2">✓</span>
+                                  <span>{event.status}</span>
+                                  <span className="ml-4 bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
+                                    {event.category}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={() => {
+                                  setReviewingEvent(event);
+                                  setShowPostEventReview(true);
+                                }}
+                                className="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+                              >
+                                Review Event
+                              </button>
+                              <button className="flex-1 bg-gray-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors">
+                                Share
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Enhanced Create Event Modal */}
+      {showCreateForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-[100]">
+          <div className="bg-white rounded-lg w-full max-w-sm max-h-[85vh] flex flex-col">
+            {/* Fixed Header */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 flex-shrink-0">
+              <h2 className="text-xl font-bold text-gray-900">Create Event</h2>
+              <button onClick={() => setShowCreateForm(false)} className="text-gray-400 text-xl">×</button>
+            </div>
+            
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+            
+            {/* Trust Score Check */}
+            {userTrustScore < 50 ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center mb-2">
+                  <span className="text-red-600 text-lg mr-2">⚠️</span>
+                  <h3 className="font-medium text-red-800">Trust Score Too Low</h3>
+                </div>
+                <p className="text-sm text-red-700 mb-2">
+                  You need a Trust Score of 50+ to create events. Your current score: {userTrustScore}
+                </p>
+                <p className="text-xs text-red-600">
+                  Build your trust by getting positive reviews from other users.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Basic Event Info */}
+                <input 
+                  type="text" 
+                  placeholder="Event title *" 
+                  value={createFormData.title}
+                  onChange={(e) => setCreateFormData(prev => ({...prev, title: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                />
+                
+                <textarea 
+                  placeholder="Event description *" 
+                  rows={3}
+                  value={createFormData.description}
+                  onChange={(e) => setCreateFormData(prev => ({...prev, description: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                />
+                
+                {/* Date and Time */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Start Date & Time *</label>
+                    <input 
+                      type="datetime-local" 
+                      value={createFormData.startDate}
+                      onChange={(e) => setCreateFormData(prev => ({...prev, startDate: e.target.value}))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">End Date & Time *</label>
+                    <input 
+                      type="datetime-local" 
+                      value={createFormData.endDate}
+                      onChange={(e) => setCreateFormData(prev => ({...prev, endDate: e.target.value}))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    />
+                  </div>
+                </div>
+                
+                {/* Location */}
+                <input 
+                  type="text" 
+                  placeholder="Location address *" 
+                  value={createFormData.address}
+                  onChange={(e) => setCreateFormData(prev => ({...prev, address: e.target.value}))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                />
+                
+                {/* Category and Privacy */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Category</label>
+                    <select 
+                      value={createFormData.category}
+                      onChange={(e) => setCreateFormData(prev => ({...prev, category: e.target.value}))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    >
+                      <option value="social">Social</option>
+                      <option value="professional">Professional</option>
+                      <option value="sports">Sports</option>
+                      <option value="educational">Educational</option>
+                      <option value="arts">Arts</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Privacy</label>
+                    <select 
+                      value={createFormData.privacy}
+                      onChange={(e) => setCreateFormData(prev => ({...prev, privacy: e.target.value}))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    >
+                      <option value="public">Public</option>
+                      <option value="private">Private</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Capacity Limit */}
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Maximum Capacity (up to 200)</label>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="200" 
+                    value={createFormData.capacity}
+                    onChange={(e) => setCreateFormData(prev => ({...prev, capacity: parseInt(e.target.value) || 50}))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  />
+                </div>
+                
+                {/* Trust Score Requirements (Public Events Only) */}
+                {createFormData.privacy === 'public' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="flex items-center mb-2">
+                      <input 
+                        type="checkbox" 
+                        id="enforceTrustScore"
+                        checked={createFormData.enforceTrustScore}
+                        onChange={(e) => setCreateFormData(prev => ({...prev, enforceTrustScore: e.target.checked}))}
+                        className="mr-2"
+                      />
+                      <label htmlFor="enforceTrustScore" className="text-sm font-medium text-blue-800">
+                        Set minimum Trust Score requirement
+                      </label>
+                    </div>
+                    {createFormData.enforceTrustScore && (
+                      <div>
+                        <label className="block text-xs text-blue-700 mb-1">
+                          Minimum Trust Score (50-100)
+                        </label>
+                        <input 
+                          type="number" 
+                          min="50" 
+                          max="100" 
+                          value={createFormData.trustScoreMin}
+                          onChange={(e) => setCreateFormData(prev => ({...prev, trustScoreMin: parseInt(e.target.value) || 50}))}
+                          className="w-full border border-blue-300 rounded px-2 py-1 text-sm"
+                        />
+                        <p className="text-xs text-blue-600 mt-1">
+                          Users below this score will be automatically denied
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Private Event Info & Invitations */}
+                {createFormData.privacy === 'private' && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <span className="text-yellow-600 text-lg mr-2">🔒</span>
+                        <h3 className="font-medium text-yellow-800">Private Event</h3>
+                      </div>
+                      <span className="text-xs text-yellow-600">{invitedFriends.length}/20 invited</span>
+                    </div>
+                    <p className="text-sm text-yellow-700 mb-3">
+                      Only invited users can see and join this event.
+                    </p>
+                    
+                    {/* Invite Friends Button */}
+                    <button
+                      type="button"
+                      onClick={() => setShowFriendsSelector(true)}
+                      className="w-full bg-yellow-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-yellow-700 transition-colors mb-2"
+                    >
+                      Invite Friends ({invitedFriends.length} selected)
+                    </button>
+                    
+                    {/* Validation Message */}
+                    {invitedFriends.length === 0 && (
+                      <p className="text-xs text-red-600 mt-2">
+                        ⚠️ Private events require at least one friend invitation
+                      </p>
+                    )}
+                    
+                    {/* Selected Friends Display */}
+                    {invitedFriends.length > 0 && (
+                      <div className="max-h-20 overflow-y-auto">
+                        <p className="text-xs text-yellow-700 mb-1">Invited:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {invitedFriends.map(friendId => {
+                            const friend = demoFriends.find(f => f.id === friendId);
+                            return friend ? (
+                              <span key={friendId} className="inline-flex items-center bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full text-xs">
+                                {friend.name}
+                                <button
+                                  type="button"
+                                  onClick={() => setInvitedFriends(prev => prev.filter(id => id !== friendId))}
+                                  className="ml-1 text-yellow-600 hover:text-yellow-800"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setShowCreateForm(false)}
+                    className="flex-1 bg-gray-500 text-white py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => {
+                      // Here would be actual event creation logic
+                      console.log('Creating event:', createFormData);
+                      setShowCreateForm(false);
+                      // Reset form
+                      setCreateFormData({
+                        title: '',
+                        description: '',
+                        startDate: '',
+                        endDate: '',
+                        address: '',
+                        category: 'social',
+                        privacy: 'public',
+                        capacity: 50,
+                        trustScoreMin: 50,
+                        enforceTrustScore: false
+                      });
+                    }}
+                    disabled={!createFormData.title || !createFormData.description || !createFormData.startDate || !createFormData.endDate || !createFormData.address || (createFormData.privacy === 'private' && invitedFriends.length === 0)}
+                    className="flex-1 bg-cyan-400 text-white py-2 rounded-lg font-medium hover:bg-cyan-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Create Event
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      )}
+      
+      {/* Friends Selector Modal for Private Events */}
+      {showFriendsSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-[110]">
+          <div className="bg-white rounded-lg p-4 w-full max-w-sm max-h-[75vh] overflow-hidden">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Invite Friends</h3>
+              <button onClick={() => setShowFriendsSelector(false)} className="text-gray-400 text-xl">×</button>
+            </div>
+            
+            <div className="flex justify-between items-center mb-3">
+              <p className="text-sm text-gray-600">Select up to 20 friends</p>
+              <span className="text-xs text-gray-500">{invitedFriends.length}/20 selected</span>
+            </div>
+            
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {demoFriends.map(friend => {
+                const isSelected = invitedFriends.includes(friend.id);
+                const canSelect = invitedFriends.length < 20 || isSelected;
+                
+                return (
+                  <div key={friend.id} className="flex items-center justify-between p-2 border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-cyan-400 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                        {friend.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{friend.name}</p>
+                        <p className="text-xs text-gray-500">Trust: {friend.trustScore}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (isSelected) {
+                          setInvitedFriends(prev => prev.filter(id => id !== friend.id));
+                        } else if (canSelect) {
+                          setInvitedFriends(prev => [...prev, friend.id]);
+                        }
+                      }}
+                      disabled={!canSelect && !isSelected}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        isSelected 
+                          ? 'bg-green-500 text-white hover:bg-green-600' 
+                          : canSelect 
+                            ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {isSelected ? 'Invited' : 'Invite'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setShowFriendsSelector(false)}
+                className="flex-1 bg-gray-500 text-white py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setShowFriendsSelector(false)}
+                className="flex-1 bg-cyan-400 text-white py-2 rounded-lg font-medium hover:bg-cyan-500 transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Post-Event Review Modal */}
+      {showPostEventReview && reviewingEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-[120]">
+          <div className="bg-white rounded-lg p-4 w-full max-w-sm max-h-[75vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Event Review</h2>
+              <button onClick={() => setShowPostEventReview(false)} className="text-gray-400 text-xl">×</button>
+            </div>
+            
+            <div className="text-center mb-6">
+              <div className="text-4xl mb-2">🎉</div>
+              <h3 className="font-bold text-lg text-gray-900 mb-2">{reviewingEvent.title}</h3>
+              <p className="text-sm text-gray-600">How was your experience?</p>
+            </div>
+            
+            {/* Event Rating */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Rate this event</label>
+              <div className="flex justify-center space-x-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button key={star} className="text-2xl text-yellow-400 hover:text-yellow-500">
+                    ⭐
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Review Text */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Your review</label>
+              <textarea 
+                placeholder="Share your experience with other users..."
+                rows={4}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              />
+            </div>
+            
+            {/* Networking Section */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center mb-3">
+                <span className="text-blue-600 text-lg mr-2">🤝</span>
+                <h3 className="font-medium text-blue-800">Connect with Attendees</h3>
+              </div>
+              <p className="text-sm text-blue-700 mb-3">
+                Found interesting people at this event? Connect with them!
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { name: 'Sarah Wilson', trustScore: 87 },
+                  { name: 'Mike Chen', trustScore: 92 },
+                  { name: 'Alex Rodriguez', trustScore: 76 },
+                  { name: 'Emma Davis', trustScore: 94 }
+                ].map((person, index) => (
+                  <div key={index} className="bg-white rounded p-2 border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-medium text-gray-900">{person.name}</p>
+                        <p className="text-xs text-gray-500">Trust: {person.trustScore}</p>
+                      </div>
+                      <button className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                        Connect
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPostEventReview(false)}
+                className="flex-1 bg-gray-500 text-white py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors"
+              >
+                Skip
+              </button>
+              <button 
+                onClick={() => {
+                  // Here would be actual review submission logic
+                  console.log('Submitting event review');
+                  setShowPostEventReview(false);
+                  setReviewingEvent(null);
+                }}
+                className="flex-1 bg-cyan-400 text-white py-2 rounded-lg font-medium hover:bg-cyan-500 transition-colors"
+              >
+                Submit Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function Home() {
-  const [currentScreen, setCurrentScreen] = useState('login');
+  const [currentScreen, setCurrentScreen] = useState('home');
+  const [currentPostId, setCurrentPostId] = useState('');
+  const [currentUserId, setCurrentUserId] = useState('');
+  const [selectedFriendsForReview, setSelectedFriendsForReview] = useState<User[]>([]);
+
+  const [posts, setPosts] = useState<Post[]>([
+    {
+      id: '1',
+      reviewer: 'Jessica Wong',
+      reviewerTrustScore: 95,
+      reviewedPerson: 'David Kim',
+      content: 'Great project manager! Jessica helped coordinate our agency collaboration and was incredibly organized. Always responded quickly and kept everyone on track.',
+      timestamp: '2 days ago',
+      votes: 18,
+      userVote: null,
+      comments: 3,
+      category: 'Professional'
+    },
+    {
+      id: '2',
+      reviewer: 'Mike Johnson',
+      reviewerTrustScore: 92,
+      reviewedPerson: 'Emma Davis',
+      content: 'Honest marketplace seller! Mike bought my gaming laptop and I was completely upfront about the minor scratches. Fair pricing and smooth transaction.',
+      timestamp: '3 days ago',
+      votes: 15,
+      userVote: null,
+      comments: 4,
+      category: 'Marketplace'
+    },
+    {
+      id: '3',
+      reviewer: 'Sarah Chen',
+      reviewerTrustScore: 89,
+      reviewedPerson: 'Alex Martinez',
+      content: 'Amazing study partner! Alex and I prepared for the CPA exam together and his motivation kept me going. We both passed thanks to our collaboration.',
+      timestamp: '4 days ago',
+      votes: 22,
+      userVote: null,
+      comments: 5,
+      category: 'Academic'
+    },
+    {
+      id: '4',
+      reviewer: 'David Kim',
+      reviewerTrustScore: 85,
+      reviewedPerson: 'Sarah Chen',
+      content: 'Reliable moving help! Sarah showed up early with her truck when I was moving apartments. Refused to take payment and helped until everything was done.',
+      timestamp: '5 days ago',
+      votes: 19,
+      userVote: null,
+      comments: 6,
+      category: 'Social/Events'
+    },
+    {
+      id: '5',
+      reviewer: 'Rachel Brown',
+      reviewerTrustScore: 82,
+      reviewedPerson: 'Tom Anderson',
+      content: 'Great Bumble coffee date! Tom was exactly as advertised - authentic, funny, and genuinely interested in conversation. Would recommend meeting up.',
+      timestamp: '1 week ago',
+      votes: 14,
+      userVote: null,
+      comments: 7,
+      category: 'Dating'
+    },
+    {
+      id: '6',
+      reviewer: 'Alex Martinez',
+      reviewerTrustScore: 89,
+      reviewedPerson: 'Nina Patel',
+      content: 'Professional tutoring service! Nina hired me to help her son with SAT prep. Clear expectations, fair payment, and great communication throughout.',
+      timestamp: '1 week ago',
+      votes: 16,
+      userVote: null,
+      comments: 4,
+      category: 'Academic'
+    },
+    {
+      id: '7',
+      reviewer: 'Nina Patel',
+      reviewerTrustScore: 74,
+      reviewedPerson: 'Rachel Brown',
+      content: 'Excellent childcare! Rachel watched our daughter for date night and was fantastic. Bedtime routine went smoothly and she sent photo updates.',
+      timestamp: '2 weeks ago',
+      votes: 21,
+      userVote: null,
+      comments: 7,
+      category: 'Childcare'
+    },
+    {
+      id: '8',
+      reviewer: 'Tom Anderson',
+      reviewerTrustScore: 67,
+      reviewedPerson: 'Kevin Lee',
+      content: 'Poor professional follow-through. Kevin asked for help with his resume, I spent hours on it, then he ghosted when it came time to return the favor.',
+      timestamp: '2 weeks ago',
+      votes: -5,
+      userVote: null,
+      comments: 3,
+      category: 'Professional'
+    }
+  ]);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, []);
+
+  const handleCreatePost = (content: string, selectedFriends: User[]) => {
+    if (selectedFriends.length === 0) return;
+
+    const newPost: Post = {
+      id: Date.now().toString(),
+      reviewer: 'Riesling Lefluuf',
+      reviewerTrustScore: 84,
+      reviewedPerson: selectedFriends[0].name,
+      content: content,
+      timestamp: 'now',
+      votes: 0,
+      userVote: null,
+      comments: 0,
+      category: 'General'
+    };
+
+    setPosts(prev => [newPost, ...prev]);
+    setSelectedFriendsForReview([]);
+  };
+
+  const handleSelectFriends = (friends: User[]) => {
+    setSelectedFriendsForReview(friends);
+  };
+
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'home':
+        return <HomeScreen 
+          onNavigate={setCurrentScreen} 
+          setPostId={setCurrentPostId} 
+          setUserId={setCurrentUserId}
+          posts={posts}
+          setPosts={setPosts}
+        />;
+      case 'profile':
+        return <ProfileScreen onNavigate={setCurrentScreen} userId={currentUserId} />;
+      case 'createpost':
+        return <CreatePostScreen 
+          onNavigate={setCurrentScreen} 
+          onCreatePost={handleCreatePost}
+          selectedFriendsForReview={selectedFriendsForReview}
+        />;
+      case 'friendroster':
+        return <FriendRosterScreen 
+          onNavigate={setCurrentScreen} 
+          onSelectFriends={handleSelectFriends}
+          selectedFriendsForReview={selectedFriendsForReview}
+        />;
+      case 'friends':
+        return <FriendsPage onNavigate={setCurrentScreen} />;
+      case 'platforms':
+        return <ConnectedPlatformsPage onNavigate={setCurrentScreen} />;
+      case 'addplatform':
+        return <AddPlatformPage onNavigate={setCurrentScreen} />;
+      case 'postthread':
+        return <PostThreadScreen 
+          onNavigate={setCurrentScreen} 
+          postId={currentPostId}
+          posts={posts}
+        />;
+      case 'groups':
+        return <GroupsScreen onNavigate={setCurrentScreen} />;
+      case 'discover':
+        return <PlaceholderScreen title="Search" onNavigate={setCurrentScreen} />;
+      case 'inbox':
+        return <PlaceholderScreen title="Inbox" onNavigate={setCurrentScreen} />;
+      default:
+        return <HomeScreen 
+          onNavigate={setCurrentScreen} 
+          setPostId={setCurrentPostId} 
+          setUserId={setCurrentUserId}
+          posts={posts}
+          setPosts={setPosts}
+        />;
+    }
+  };
 
   return (
     <>
@@ -20,68 +3232,66 @@ export default function Home() {
         <meta name="description" content="Scoop - Your trusted social verification platform" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#00BCD4" />
+        <style jsx>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: #F3F4F6;
+            border-radius: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #9CA3AF;
+            border-radius: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6B7280;
+          }
+        `}</style>
       </Head>
       
-      <div className="bg-gray-100 min-h-screen">
-        {/* Mobile Container */}
-        <div className="max-w-sm mx-auto bg-white min-h-screen shadow-xl relative">
-          {/* Status Bar */}
-          <div className="bg-cyan-400 text-white text-xs font-medium px-4 py-1 flex justify-between items-center">
-            <span>6:12 ↗</span>
+      <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+        <div className="bg-white shadow-2xl relative rounded-3xl flex flex-col overflow-hidden" style={{width: '393px', height: '852px', maxHeight: '852px'}}>
+          <div className="bg-black text-white px-6 py-2 rounded-t-3xl flex items-center justify-between text-sm">
+            <span>9:41</span>
             <div className="flex items-center space-x-1">
-              <span>📶</span>
+              <div className="flex space-x-1">
+                <div className="w-1 h-1 bg-white rounded-full"></div>
+                <div className="w-1 h-1 bg-white rounded-full"></div>
+                <div className="w-1 h-1 bg-white rounded-full"></div>
+                <div className="w-1 h-1 bg-gray-500 rounded-full"></div>
+              </div>
+              <span className="ml-2">📶</span>
               <span>📶</span>
               <span>🔋</span>
             </div>
           </div>
 
-          {/* Screen Content */}
-          {currentScreen === 'login' && <LoginScreen onNext={() => setCurrentScreen('loginForm')} />}
-          {currentScreen === 'loginForm' && <LoginFormScreen onNext={() => setCurrentScreen('profile')} />}
-          {currentScreen === 'profile' && <ProfileScreen onNavigate={setCurrentScreen} />}
-          {currentScreen === 'groups' && <GroupsScreen onNavigate={setCurrentScreen} />}
+          <div className="flex-1 overflow-hidden" style={{maxHeight: 'calc(852px - 120px)'}}>
+            {renderScreen()}
+          </div>
 
-          {/* Bottom Navigation */}
-          {(currentScreen === 'profile' || currentScreen === 'groups') && (
-            <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 max-w-sm w-full bg-white border-t border-gray-200 z-50">
-              <div className="flex">
-                <button 
-                  onClick={() => setCurrentScreen('profile')}
-                  className="flex-1 py-3 text-center"
-                >
-                  <div className="text-lg mb-1">🏠</div>
-                  <div className={`text-xs ${currentScreen === 'profile' ? 'text-cyan-400' : 'text-gray-600'}`}>HOME</div>
-                </button>
-                <button 
-                  onClick={() => setCurrentScreen('groups')}
-                  className="flex-1 py-3 text-center"
-                >
-                  <div className="text-lg mb-1">▶️</div>
-                  <div className={`text-xs ${currentScreen === 'groups' ? 'text-cyan-400' : 'text-gray-600'}`}>GROUPS</div>
-                </button>
-                <button 
-                  onClick={() => alert('Search feature coming soon!')}
-                  className="flex-1 py-3 text-center"
-                >
-                  <div className="w-8 h-8 bg-cyan-400 rounded-full mx-auto mb-1 flex items-center justify-center">
-                    <span className="text-white text-lg">🔍</span>
-                  </div>
-                  <div className="text-xs text-cyan-400">SEARCH</div>
-                </button>
-                <button 
-                  onClick={() => alert('Inbox feature coming soon!')}
-                  className="flex-1 py-3 text-center"
-                >
-                  <div className="text-lg mb-1">🔔</div>
-                  <div className="text-xs text-gray-600">INBOX</div>
-                </button>
-                <button 
-                  onClick={() => setCurrentScreen('profile')}
-                  className="flex-1 py-3 text-center"
-                >
-                  <div className="text-lg mb-1">👤</div>
-                  <div className={`text-xs ${currentScreen === 'profile' ? 'text-cyan-400' : 'text-gray-600'}`}>PROFILE</div>
-                </button>
+          {!['createpost', 'friendroster', 'postthread'].includes(currentScreen) && (
+            <div className="bg-white border-t border-gray-200 px-2 py-2 rounded-b-3xl flex-shrink-0 relative z-50">
+              <div className="flex justify-around items-center">
+                {[
+                  { id: 'home', label: 'Home', icon: '🏠' },
+                  { id: 'groups', label: 'Groups', icon: '👥' },
+                  { id: 'discover', label: 'Search', icon: '🔍' },
+                  { id: 'inbox', label: 'Inbox', icon: '💬' },
+                  { id: 'profile', label: 'Profile', icon: '👤' }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setCurrentScreen(item.id)}
+                    className={`flex flex-col items-center justify-center py-1 px-1 min-w-0 flex-1 transition-colors ${
+                      currentScreen === item.id ? 'text-cyan-600' : 'text-gray-500'
+                    }`}
+                  >
+                    <span className="text-lg mb-1">{item.icon}</span>
+                    <span className="text-xs font-medium leading-tight">{item.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -90,272 +3300,3 @@ export default function Home() {
     </>
   );
 }
-
-// Login Screen Component
-const LoginScreen: React.FC<ScreenProps> = ({ onNext }) => {
-  return (
-    <div className="bg-gradient-to-b from-cyan-400 to-cyan-600 h-screen flex flex-col items-center justify-center text-white relative">
-      {/* Scoop Logo */}
-      <div className="mb-8">
-        <div className="w-24 h-24 mx-auto mb-4 bg-white rounded-full flex items-center justify-center">
-          {/* Logo Icon */}
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-            <circle cx="16" cy="16" r="6" fill="#00BCD4"/>
-            <circle cx="32" cy="16" r="6" fill="#00BCD4"/>
-            <circle cx="24" cy="32" r="6" fill="#00BCD4"/>
-            <path d="M24 26 L16 22 L32 22 Z" fill="#00BCD4"/>
-          </svg>
-        </div>
-        <h1 className="text-4xl font-bold text-center mb-2">scoop</h1>
-      </div>
-      
-      {/* Login Buttons */}
-      <div className="w-full max-w-sm px-8 space-y-4">
-        <button 
-          onClick={onNext}
-          className="w-full bg-white text-cyan-600 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
-        >
-          Sign in
-        </button>
-        <button 
-          onClick={onNext}
-          className="w-full border-2 border-white text-white py-3 rounded-lg font-semibold hover:bg-white hover:text-cyan-600 transition-colors"
-        >
-          Sign up
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Login Form Screen Component
-const LoginFormScreen: React.FC<ScreenProps> = ({ onNext }) => {
-  return (
-    <div className="min-h-screen bg-white">
-      <div className="bg-gradient-to-b from-cyan-400 to-cyan-600 h-32 flex items-center justify-center">
-        <h1 className="text-3xl font-bold text-white">scoop</h1>
-      </div>
-      
-      <div className="p-6">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-600 mb-2">USERNAME</label>
-            <input 
-              type="email" 
-              defaultValue="nickhemingway@gmail.com" 
-              className="w-full border-b border-gray-300 py-2 focus:border-cyan-400 outline-none"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm text-gray-600 mb-2">PASSWORD</label>
-            <div className="relative">
-              <input 
-                type="password" 
-                defaultValue="••••••••" 
-                className="w-full border-b border-gray-300 py-2 focus:border-cyan-400 outline-none pr-12"
-              />
-              <button type="button" className="absolute right-0 top-2 text-gray-500 text-sm">SHOW</button>
-            </div>
-            <a href="#" className="text-sm text-gray-500 mt-1 block">Forgot Password?</a>
-          </div>
-          
-          <button 
-            onClick={onNext}
-            className="w-full bg-gray-800 text-white py-3 rounded-lg font-semibold mt-6 hover:bg-gray-700 transition-colors"
-          >
-            Login
-          </button>
-          
-          <div className="text-center">
-            <a href="#" className="text-gray-500">Create Account</a>
-          </div>
-          
-          <div className="text-center text-gray-500 text-sm">or</div>
-          
-          {/* Social Login */}
-          <div className="flex justify-center space-x-4">
-            <div className="w-12 h-12 bg-blue-400 rounded flex items-center justify-center text-white hover:scale-110 transition-transform cursor-pointer">
-              <span className="font-bold">t</span>
-            </div>
-            <div className="w-12 h-12 bg-blue-600 rounded flex items-center justify-center text-white hover:scale-110 transition-transform cursor-pointer">
-              <span className="font-bold">f</span>
-            </div>
-            <div className="w-12 h-12 bg-red-500 rounded flex items-center justify-center text-white hover:scale-110 transition-transform cursor-pointer">
-              <span className="font-bold">G+</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Profile Screen Component
-const ProfileScreen: React.FC<NavigationProps> = ({ onNavigate }) => {
-  return (
-    <div className="min-h-screen bg-white pb-20">
-      {/* Profile Header */}
-      <div className="bg-gradient-to-r from-cyan-400 to-blue-400 p-6 text-center text-white">
-        <div className="w-20 h-20 bg-white rounded-full mx-auto mb-4 flex items-center justify-center">
-          <div className="w-16 h-16 bg-cyan-400 rounded-full flex items-center justify-center text-white text-xl font-bold">
-            👤
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-center mb-2">
-          <h2 className="text-xl font-bold mr-2">Nick Hemingway</h2>
-          <span className="text-cyan-200 text-xl">✓</span>
-        </div>
-        
-        <p className="opacity-90 text-sm">@nickhemingway9</p>
-        
-        <button className="bg-white text-cyan-600 px-4 py-1 rounded-full text-sm font-semibold mt-3 hover:bg-gray-50 transition-colors">
-          Edit Profile
-        </button>
-      </div>
-
-      {/* Bio Section */}
-      <div className="p-4">
-        <p className="text-gray-700 text-sm mb-4">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut Lorem ipsum dolor sit amet, consectetur adipiscing elit
-        </p>
-        
-        {/* Trust Badges */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">VERIFIED</span>
-          <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs">OUTGOING</span>
-          <span className="bg-purple-500 text-white px-2 py-1 rounded text-xs">EXTROVERTED</span>
-          <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">CARING</span>
-          <span className="bg-pink-500 text-white px-2 py-1 rounded text-xs">DISCIPLINED</span>
-        </div>
-        
-        {/* Social Links */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex space-x-4">
-            {[
-              { bg: 'bg-blue-500', text: 'in', label: 'LINKEDIN' },
-              { bg: 'bg-blue-400', text: 't', label: 'TWITTER' },
-              { bg: 'bg-blue-600', text: 'f', label: 'FACEBOOK' },
-              { bg: 'bg-black', text: 'tt', label: 'TIK TOK' },
-              { bg: 'bg-pink-500', text: 'ig', label: 'INSTAGRAM' },
-              { bg: 'bg-red-500', text: 'yt', label: 'YOUTUBE' }
-            ].map((social, index) => (
-              <div key={index} className="text-center hover:scale-110 transition-transform cursor-pointer">
-                <div className={`w-8 h-8 ${social.bg} rounded mx-auto mb-1 flex items-center justify-center text-white text-xs font-bold`}>
-                  {social.text}
-                </div>
-                <span className="text-xs text-gray-500">{social.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="border-b border-gray-200 mb-4">
-          <div className="flex">
-            <button className="flex-1 py-3 text-center text-cyan-400 border-b-2 border-cyan-400 font-semibold">PEOPLE</button>
-            <button className="flex-1 py-3 text-center text-gray-500">GROUPS</button>
-            <button className="flex-1 py-3 text-center text-gray-500">LIKES</button>
-          </div>
-        </div>
-
-        {/* Activity Feed */}
-        <div className="border-b border-gray-100 pb-4">
-          <div className="flex items-start space-x-3">
-            <div className="w-10 h-10 bg-cyan-400 rounded-full flex items-center justify-center text-white font-bold">CS</div>
-            <div className="flex-1">
-              <div className="flex items-center mb-1">
-                <span className="font-semibold text-sm">Cody Snow</span>
-                <span className="text-cyan-400 ml-1">✓</span>
-                <span className="text-gray-500 text-xs ml-2">• 2h</span>
-                <span className="ml-auto">😊</span>
-              </div>
-              <p className="text-sm text-gray-700 mb-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt Lorem ipsum dolor sit amet, consectetur adipiscing</p>
-              <div className="flex items-center text-gray-500 text-sm space-x-4">
-                <span className="hover:text-cyan-400 cursor-pointer">💬</span>
-                <span className="hover:text-cyan-400 cursor-pointer">👍</span>
-                <span className="hover:text-cyan-400 cursor-pointer">↗️</span>
-                <span className="hover:text-cyan-400 cursor-pointer">⭐</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Groups Screen Component
-const GroupsScreen: React.FC<NavigationProps> = ({ onNavigate }) => {
-  return (
-    <div className="min-h-screen bg-white pb-20">
-      {/* Search Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="relative mb-4">
-          <input 
-            type="text" 
-            placeholder="Search groups" 
-            className="w-full bg-gray-100 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
-          />
-          <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
-          <button className="absolute right-3 top-2 text-cyan-400 text-lg">+</button>
-        </div>
-        
-        {/* Filter Tabs */}
-        <div className="flex space-x-4">
-          <button className="bg-gray-200 px-4 py-2 rounded-full text-sm hover:bg-gray-300 transition-colors">UPCOMING</button>
-          <button className="bg-gray-200 px-4 py-2 rounded-full text-sm hover:bg-gray-300 transition-colors">PAST GROUPS</button>
-          <button className="bg-gray-200 px-4 py-2 rounded-full text-sm hover:bg-gray-300 transition-colors">DISCOVER</button>
-        </div>
-      </div>
-
-      {/* Events List */}
-      <div className="p-4">
-        <h3 className="font-bold text-gray-900 mb-4">THIS WEEK</h3>
-        
-        {/* Event Cards */}
-        {[
-          { day: '18', month: 'JAN', title: 'SUPERBOWL PARTY', host: 'Joe Smith-Peterson', location: 'Hotel Indya, Glendale Arizona' },
-          { day: '19', month: 'JAN', title: 'TEAM ROWING BANQUET', host: 'Arizona State', location: '' }
-        ].map((event, index) => (
-          <div key={index} className="bg-gradient-to-r from-cyan-400 to-cyan-600 text-white rounded-xl p-4 mb-3 hover:shadow-lg transition-shadow cursor-pointer">
-            <div className="flex items-start">
-              <div className="text-center mr-4">
-                <div className="text-2xl font-bold">{event.day}</div>
-                <div className="text-sm opacity-90">{event.month}</div>
-              </div>
-              <div className="flex-1">
-                <h4 className="font-bold text-lg">{event.title}</h4>
-                <div className="flex items-center mt-1 text-sm opacity-90">
-                  <span className="mr-2">🔒</span>
-                  <span>Hosted by {event.host}</span>
-                </div>
-                {event.location && <p className="text-sm opacity-90 mt-1">{event.location}</p>}
-              </div>
-            </div>
-          </div>
-        ))}
-
-        <h3 className="font-bold text-gray-900 mb-4 mt-6">NEXT WEEK</h3>
-        
-        <div className="bg-gradient-to-r from-cyan-400 to-cyan-600 text-white rounded-xl p-4 mb-3 hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="flex items-start">
-            <div className="text-center mr-4">
-              <div className="text-2xl font-bold">25</div>
-              <div className="text-sm opacity-90">JAN</div>
-            </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-lg">DISK GOLF TOURNAMENT</h4>
-              <div className="flex items-center mt-1 text-sm opacity-90">
-                <span className="mr-2">🔒</span>
-                <span>Hosted by Sun Devil</span>
-              </div>
-              <p className="text-sm opacity-90 mt-1">Steele Indian School Park</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};

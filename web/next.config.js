@@ -2,7 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  output: 'export',
+  // Commented out for development - uncomment for production build
+  // output: 'export',
   trailingSlash: true,
   images: {
     unoptimized: true,

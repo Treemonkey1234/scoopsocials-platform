@@ -1,0 +1,570 @@
+
+> scoopsocials-web@1.0.0 dev
+> next dev
+
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+  ▲ Next.js 14.2.29
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ✓ Ready in 1001ms
+ ○ Compiling / ...
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Expression expected
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:55:1]
+ [2m55[0m |   const [currentUserId, setCurrentUserId] = useState('');
+ [2m56[0m | 
+ [2m57[0m |   return (
+ [2m58[0m |     <>
+    : [31;1m     ^[0m
+ [2m59[0m |       <Head>
+ [2m60[0m |         <title>Scoop - Social Verification</title>
+ [2m61[0m |         <meta name="description" content="Scoop - Your trusted social verification platform" />
+    `----
+
+  [31mx[0m Expected ',', got 'className'
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:63:1]
+ [2m63[0m |         <meta name="theme-color" content="#00BCD4" />
+ [2m64[0m |       </Head>
+ [2m65[0m |       
+ [2m66[0m |       <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    : [31;1m           ^^^^^^^^^[0m
+ [2m67[0m |         {/* Mobile Container - iPhone 16 Pro Max dimensions */}
+ [2m68[0m |         <div className="bg-white shadow-2xl relative rounded-3xl flex flex-col" style={{width: '430px', height: '932px'}}>
+ [2m69[0m |           {/* Status Bar */}
+    `----
+
+Caused by:
+    Syntax Error
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Expression expected
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:55:1]
+ [2m55[0m |   const [currentUserId, setCurrentUserId] = useState('');
+ [2m56[0m | 
+ [2m57[0m |   return (
+ [2m58[0m |     <>
+    : [31;1m     ^[0m
+ [2m59[0m |       <Head>
+ [2m60[0m |         <title>Scoop - Social Verification</title>
+ [2m61[0m |         <meta name="description" content="Scoop - Your trusted social verification platform" />
+    `----
+
+  [31mx[0m Expected ',', got 'className'
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:63:1]
+ [2m63[0m |         <meta name="theme-color" content="#00BCD4" />
+ [2m64[0m |       </Head>
+ [2m65[0m |       
+ [2m66[0m |       <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    : [31;1m           ^^^^^^^^^[0m
+ [2m67[0m |         {/* Mobile Container - iPhone 16 Pro Max dimensions */}
+ [2m68[0m |         <div className="bg-white shadow-2xl relative rounded-3xl flex flex-col" style={{width: '430px', height: '932px'}}>
+ [2m69[0m |           {/* Status Bar */}
+    `----
+
+Caused by:
+    Syntax Error
+ GET / 500 in 1720ms
+ ✓ Compiled /_error in 125ms (277 modules)
+ GET /_next/static/webpack/c95fa2b3fd037aa0.webpack.hot-update.json 404 in 20ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 6ms
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:238:1]
+ [2m238[0m |   };
+ [2m239[0m | 
+ [2m240[0m |   return (
+ [2m241[0m |     <div className="bg-gray-50 h-full flex flex-col">
+     : [31;1m     ^^^[0m
+ [2m242[0m |       {/* Header */}
+ [2m243[0m |       <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+ [2m244[0m |         <div className="flex items-center justify-between">
+     `----
+
+Caused by:
+    Syntax Error
+ GET / 500 in 9ms
+ GET / 500 in 4ms
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:177:1]
+ [2m177[0m | const HomeScreen: React.FC<NavigationProps & { setPostId: (id: string) => void; setUserId: (id: string) => void; }> = ({ onNavigate, setPostId, setUserId }) => {
+ [2m178[0m | 
+ [2m179[0m |   return (
+ [2m180[0m |     <div className="bg-gray-50 h-full flex flex-col">
+     : [31;1m     ^^^[0m
+ [2m181[0m |       {/* Header */}
+ [2m182[0m |       <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+ [2m183[0m |         <div className="flex items-center justify-between">
+     `----
+
+Caused by:
+    Syntax Error
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:201:1]
+ [2m201[0m |       </div>
+ [2m202[0m | 
+ [2m203[0m |       {/* Social Feed */}
+ [2m204[0m |       <div className="flex-1 overflow-y-auto">
+     : [31;1m       ^^^[0m
+ [2m205[0m |         <div className="px-4 py-4 space-y-4 pb-4">
+ [2m206[0m |         {isLoading ? (
+ [2m207[0m |           // Loading skeleton
+     `----
+
+Caused by:
+    Syntax Error
+ ✓ Compiled in 353ms (339 modules)
+ GET /_next/static/webpack/c95fa2b3fd037aa0.webpack.hot-update.json 404 in 19ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 7ms
+ GET / 200 in 3ms
+ GET / 200 in 6ms
+ ✓ Compiled in 94ms (339 modules)
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:238:1]
+ [2m238[0m |   };
+ [2m239[0m | 
+ [2m240[0m |   return (
+ [2m241[0m |     <div className="bg-gray-50 h-full flex flex-col">
+     : [31;1m     ^^^[0m
+ [2m242[0m |       {/* Header */}
+ [2m243[0m |       <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+ [2m244[0m |         <div className="flex items-center justify-between">
+     `----
+
+Caused by:
+    Syntax Error
+ GET / 500 in 7ms
+ GET / 500 in 4ms
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:177:1]
+ [2m177[0m | const HomeScreen: React.FC<NavigationProps & { setPostId: (id: string) => void; setUserId: (id: string) => void; }> = ({ onNavigate, setPostId, setUserId }) => {
+ [2m178[0m | 
+ [2m179[0m |   return (
+ [2m180[0m |     <div className="bg-gray-50 h-full flex flex-col">
+     : [31;1m     ^^^[0m
+ [2m181[0m |       {/* Header */}
+ [2m182[0m |       <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+ [2m183[0m |         <div className="flex items-center justify-between">
+     `----
+
+Caused by:
+    Syntax Error
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:207:1]
+ [2m207[0m |       </div>
+ [2m208[0m | 
+ [2m209[0m |       {/* Social Feed */}
+ [2m210[0m |       <div className="flex-1 overflow-y-auto">
+     : [31;1m       ^^^[0m
+ [2m211[0m |         <div className="px-4 py-4 space-y-4 pb-4">
+ [2m212[0m |         {isLoading ? (
+ [2m213[0m |           // Loading skeleton
+     `----
+
+Caused by:
+    Syntax Error
+ GET / 500 in 5ms
+ GET / 500 in 4ms
+ ✓ Compiled in 131ms (339 modules)
+ GET /_next/static/webpack/c95fa2b3fd037aa0.webpack.hot-update.json 500 in 75ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 15ms
+ GET / 200 in 4ms
+ ✓ Compiled in 84ms (339 modules)
+ GET / 200 in 13ms
+ ✓ Compiled in 100ms (339 modules)
+ GET / 200 in 8ms
+ GET / 200 in 3ms
+ ✓ Compiled in 92ms (339 modules)
+ ✓ Compiled in 88ms (339 modules)
+ ✓ Compiled in 97ms (339 modules)
+ ✓ Compiled in 106ms (339 modules)
+ ✓ Compiled in 92ms (339 modules)
+ ✓ Compiled in 97ms (339 modules)
+ ✓ Compiled in 76ms (339 modules)
+ ✓ Compiled in 83ms (339 modules)
+ ✓ Compiled in 119ms (339 modules)
+ GET / 200 in 14ms
+ ✓ Compiled in 100ms (339 modules)
+ ✓ Compiled in 86ms (339 modules)
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:591:1]
+ [2m591[0m |   );
+ [2m592[0m | 
+ [2m593[0m |   return (
+ [2m594[0m |     <div className="bg-cyan-400 h-full flex flex-col">
+     : [31;1m     ^^^[0m
+ [2m595[0m |       {/* Profile Header */}
+ [2m596[0m |       <div className="px-4 pt-4 pb-2">
+ [2m597[0m |         {/* Top Row with Friends Button */}
+     `----
+
+Caused by:
+    Syntax Error
+ ✓ Compiled in 101ms (339 modules)
+ ✓ Compiled in 85ms (339 modules)
+ GET / 200 in 19ms
+ GET / 200 in 5ms
+ ✓ Compiled in 102ms (339 modules)
+ ✓ Compiled in 88ms (339 modules)
+ ✓ Compiled in 80ms (339 modules)
+ GET / 200 in 9ms
+ ✓ Compiled in 146ms (339 modules)
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Expression expected
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:55:1]
+ [2m55[0m |   const [currentUserId, setCurrentUserId] = useState('');
+ [2m56[0m | 
+ [2m57[0m |   return (
+ [2m58[0m |     <>
+    : [31;1m     ^[0m
+ [2m59[0m |       <Head>
+ [2m60[0m |         <title>Scoop - Social Verification</title>
+ [2m61[0m |         <meta name="description" content="Scoop - Your trusted social verification platform" />
+    `----
+
+  [31mx[0m Expected ',', got 'className'
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:63:1]
+ [2m63[0m |         <meta name="theme-color" content="#00BCD4" />
+ [2m64[0m |       </Head>
+ [2m65[0m |       
+ [2m66[0m |       <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    : [31;1m           ^^^^^^^^^[0m
+ [2m67[0m |         {/* Mobile Container - iPhone 16 Pro Max dimensions */}
+ [2m68[0m |         <div className="bg-white shadow-2xl relative rounded-3xl flex flex-col" style={{width: '430px', height: '932px'}}>
+ [2m69[0m |           {/* Status Bar */}
+    `----
+
+Caused by:
+    Syntax Error
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Expression expected
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:55:1]
+ [2m55[0m |   const [currentUserId, setCurrentUserId] = useState('');
+ [2m56[0m | 
+ [2m57[0m |   return (
+ [2m58[0m |     <>
+    : [31;1m     ^[0m
+ [2m59[0m |       <Head>
+ [2m60[0m |         <title>Scoop - Social Verification</title>
+ [2m61[0m |         <meta name="description" content="Scoop - Your trusted social verification platform" />
+    `----
+
+  [31mx[0m Expected ',', got 'className'
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:63:1]
+ [2m63[0m |         <meta name="theme-color" content="#00BCD4" />
+ [2m64[0m |       </Head>
+ [2m65[0m |       
+ [2m66[0m |       <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    : [31;1m           ^^^^^^^^^[0m
+ [2m67[0m |         {/* Mobile Container - iPhone 16 Pro Max dimensions */}
+ [2m68[0m |         <div className="bg-white shadow-2xl relative rounded-3xl flex flex-col" style={{width: '430px', height: '932px'}}>
+ [2m69[0m |           {/* Status Bar */}
+    `----
+
+Caused by:
+    Syntax Error
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Expression expected
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:55:1]
+ [2m55[0m |   const [currentUserId, setCurrentUserId] = useState('');
+ [2m56[0m | 
+ [2m57[0m |   return (
+ [2m58[0m |     <>
+    : [31;1m     ^[0m
+ [2m59[0m |       <Head>
+ [2m60[0m |         <title>Scoop - Social Verification</title>
+ [2m61[0m |         <meta name="description" content="Scoop - Your trusted social verification platform" />
+    `----
+
+  [31mx[0m Expected ',', got 'className'
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:63:1]
+ [2m63[0m |         <meta name="theme-color" content="#00BCD4" />
+ [2m64[0m |       </Head>
+ [2m65[0m |       
+ [2m66[0m |       <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    : [31;1m           ^^^^^^^^^[0m
+ [2m67[0m |         {/* Mobile Container - iPhone 16 Pro Max dimensions */}
+ [2m68[0m |         <div className="bg-white shadow-2xl relative rounded-3xl flex flex-col" style={{width: '430px', height: '932px'}}>
+ [2m69[0m |           {/* Status Bar */}
+    `----
+
+Caused by:
+    Syntax Error
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Expression expected
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:55:1]
+ [2m55[0m |   const [currentUserId, setCurrentUserId] = useState('');
+ [2m56[0m | 
+ [2m57[0m |   return (
+ [2m58[0m |     <>
+    : [31;1m     ^[0m
+ [2m59[0m |       <Head>
+ [2m60[0m |         <title>Scoop - Social Verification</title>
+ [2m61[0m |         <meta name="description" content="Scoop - Your trusted social verification platform" />
+    `----
+
+  [31mx[0m Expected ',', got 'className'
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:63:1]
+ [2m63[0m |         <meta name="theme-color" content="#00BCD4" />
+ [2m64[0m |       </Head>
+ [2m65[0m |       
+ [2m66[0m |       <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    : [31;1m           ^^^^^^^^^[0m
+ [2m67[0m |         {/* Mobile Container - iPhone 16 Pro Max dimensions */}
+ [2m68[0m |         <div className="bg-white shadow-2xl relative rounded-3xl flex flex-col" style={{width: '430px', height: '932px'}}>
+ [2m69[0m |           {/* Status Bar */}
+    `----
+
+Caused by:
+    Syntax Error
+ GET / 500 in 7ms
+ GET / 500 in 4ms
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Expression expected
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:55:1]
+ [2m55[0m |   const [currentUserId, setCurrentUserId] = useState('');
+ [2m56[0m | 
+ [2m57[0m |   return (
+ [2m58[0m |     <>
+    : [31;1m     ^[0m
+ [2m59[0m |       <Head>
+ [2m60[0m |         <title>Scoop - Social Verification</title>
+ [2m61[0m |         <meta name="description" content="Scoop - Your trusted social verification platform" />
+    `----
+
+  [31mx[0m Expected ',', got 'className'
+    ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:63:1]
+ [2m63[0m |         <meta name="theme-color" content="#00BCD4" />
+ [2m64[0m |       </Head>
+ [2m65[0m |       
+ [2m66[0m |       <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    : [31;1m           ^^^^^^^^^[0m
+ [2m67[0m |         {/* Mobile Container - iPhone 16 Pro Max dimensions */}
+ [2m68[0m |         <div className="bg-white shadow-2xl relative rounded-3xl flex flex-col" style={{width: '430px', height: '932px'}}>
+ [2m69[0m |           {/* Status Bar */}
+    `----
+
+Caused by:
+    Syntax Error
+ GET / 500 in 4ms
+ GET / 500 in 5ms
+ GET / 500 in 4ms
+ GET / 500 in 4ms
+ ✓ Compiled in 294ms (339 modules)
+ GET /_next/static/webpack/c95fa2b3fd037aa0.webpack.hot-update.json 500 in 109ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 17ms
+ GET / 200 in 3ms
+ ✓ Compiled in 108ms (277 modules)
+ GET / 200 in 19ms
+ ✓ Compiled in 103ms (277 modules)
+ ✓ Compiled in 161ms (283 modules)
+ ✓ Compiled in 85ms (283 modules)
+ ✓ Compiled in 81ms (277 modules)
+ ✓ Compiled in 106ms (277 modules)
+ ✓ Compiled in 80ms (277 modules)
+ GET / 200 in 14ms
+ ✓ Compiled in 85ms (277 modules)
+ ✓ Compiled in 94ms (277 modules)
+ GET / 200 in 10ms
+ ✓ Compiled in 93ms (277 modules)
+ ✓ Compiled in 75ms (277 modules)
+ ✓ Compiled in 78ms (277 modules)
+ ✓ Compiled in 90ms (277 modules)
+ ✓ Compiled in 76ms (277 modules)
+ ✓ Compiled in 82ms (277 modules)
+ ✓ Compiled in 88ms (277 modules)
+ ✓ Compiled in 79ms (277 modules)
+ GET / 200 in 13ms
+ ✓ Compiled in 100ms (277 modules)
+ ✓ Compiled in 77ms (277 modules)
+ ✓ Compiled in 98ms (277 modules)
+ ✓ Compiled in 80ms (277 modules)
+ GET / 200 in 15ms
+ ✓ Compiled in 91ms (277 modules)
+ ✓ Compiled in 80ms (277 modules)
+ GET / 200 in 13ms
+ ✓ Compiled in 104ms (277 modules)
+ ✓ Compiled in 85ms (277 modules)
+ ✓ Compiled in 120ms (283 modules)
+ ✓ Compiled in -668ms (283 modules)
+ ✓ Compiled in 92ms (283 modules)
+ ✓ Compiled in 128ms (277 modules)
+ ✓ Compiled in 89ms (277 modules)
+ ✓ Compiled in 99ms (277 modules)
+ GET / 200 in 14ms
+ ✓ Compiled in 100ms (277 modules)
+ ✓ Compiled in 94ms (277 modules)
+ ✓ Compiled in 77ms (277 modules)
+ ✓ Compiled in 89ms (277 modules)
+ GET / 200 in 13ms
+ GET / 200 in 4ms
+ ✓ Compiled in 94ms (277 modules)
+ ✓ Compiled in 84ms (277 modules)
+ ✓ Compiled in 77ms (277 modules)
+ ✓ Compiled in 79ms (277 modules)
+ ✓ Compiled in 90ms (277 modules)
+ GET / 200 in 14ms
+ GET / 200 in 4ms
+ ✓ Compiled in 99ms (277 modules)
+ ✓ Compiled in 101ms (277 modules)
+ ✓ Compiled in 94ms (277 modules)
+ ✓ Compiled in 94ms (277 modules)
+ GET / 200 in 15ms
+ ✓ Compiled in 96ms (277 modules)
+ ✓ Compiled in 91ms (277 modules)
+ ✓ Compiled in 92ms (277 modules)
+ ✓ Compiled in 82ms (277 modules)
+ ✓ Compiled in 78ms (277 modules)
+ ✓ Compiled in 100ms (277 modules)
+ GET / 200 in 17ms
+ GET / 200 in 4ms
+ GET / 200 in 4ms
+ GET / 200 in 4ms
+ ✓ Compiled in 107ms (277 modules)
+ ✓ Compiled in 84ms (277 modules)
+ ✓ Compiled in 91ms (277 modules)
+ ✓ Compiled in 87ms (277 modules)
+ ✓ Compiled in 89ms (277 modules)
+ ✓ Compiled in 108ms (277 modules)
+ ✓ Compiled in 106ms (277 modules)
+ ✓ Compiled in 98ms (277 modules)
+ GET / 200 in 16ms
+ ✓ Compiled in 113ms (277 modules)
+ ✓ Compiled in 91ms (277 modules)
+ ✓ Compiled in 91ms (277 modules)
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+      ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:1150:1]
+ [2m1150[0m |   };
+ [2m1151[0m | 
+ [2m1152[0m |   return (
+ [2m1153[0m |     <div className="bg-gray-50 h-full flex flex-col">
+      : [31;1m     ^^^[0m
+ [2m1154[0m |       {/* Header */}
+ [2m1155[0m |       <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+ [2m1156[0m |         <div className="flex items-center justify-between">
+      `----
+
+Caused by:
+    Syntax Error
+ ⨯ ./pages/index.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+      ,-[[36;1;4m/home/treemonkey/scoopsocials-platform/web/pages/index.tsx[0m:1150:1]
+ [2m1150[0m |   };
+ [2m1151[0m | 
+ [2m1152[0m |   return (
+ [2m1153[0m |     <div className="bg-gray-50 h-full flex flex-col">
+      : [31;1m     ^^^[0m
+ [2m1154[0m |       {/* Header */}
+ [2m1155[0m |       <div className="bg-white px-6 py-4 border-b border-gray-100 flex-shrink-0">
+ [2m1156[0m |         <div className="flex items-center justify-between">
+      `----
+
+Caused by:
+    Syntax Error
+ ✓ Compiled in 104ms (277 modules)
+ ✓ Compiled in 94ms (277 modules)
+ ✓ Compiled in 157ms (277 modules)
+ ✓ Compiled in 128ms (277 modules)
+ ✓ Compiled in 105ms (277 modules)
+ ✓ Compiled in 113ms (277 modules)
+ ✓ Compiled in 100ms (277 modules)
+ ✓ Compiled in 101ms (277 modules)
+ ✓ Compiled in 105ms (277 modules)
+ ✓ Compiled in 92ms (277 modules)
+ ✓ Compiled in 104ms (277 modules)
+ ✓ Compiled in 99ms (277 modules)
+ ✓ Compiled in 105ms (277 modules)
+ ✓ Compiled in 93ms (277 modules)
+ ✓ Compiled in 105ms (277 modules)
+ ✓ Compiled in 95ms (277 modules)
+ ✓ Compiled in 99ms (277 modules)
+ ✓ Compiled in 128ms (277 modules)
+ ✓ Compiled in 96ms (277 modules)
+ ✓ Compiled in 100ms (277 modules)
+ ✓ Compiled in 101ms (277 modules)
+ ✓ Compiled in 235ms (277 modules)
+ ✓ Compiled in 108ms (277 modules)
+ ✓ Compiled in 126ms (277 modules)
+ GET / 200 in 21ms
+ ✓ Compiled in 117ms (277 modules)
+ ✓ Compiled in 89ms (277 modules)
+ ✓ Compiled in 88ms (277 modules)
+ ✓ Compiled in 89ms (277 modules)
+ ✓ Compiled in 167ms (277 modules)
+ ✓ Compiled in 104ms (277 modules)
+ ✓ Compiled in 90ms (277 modules)
+ GET / 200 in 16ms
+ ✓ Compiled in 117ms (277 modules)
+ ✓ Compiled in 91ms (277 modules)
+ ✓ Compiled in 95ms (277 modules)
+ ✓ Compiled in 153ms (277 modules)
+ ✓ Compiled in 111ms (277 modules)
+ ✓ Compiled in 93ms (277 modules)
+ ✓ Compiled in 100ms (277 modules)
+ ✓ Compiled in 94ms (277 modules)
+ ✓ Compiled in 93ms (277 modules)
+ ✓ Compiled in 95ms (277 modules)
+ ✓ Compiled in 89ms (277 modules)
+ ✓ Compiled in 93ms (277 modules)
+ GET / 200 in 20ms
+ ✓ Compiled in 115ms (277 modules)
+ ✓ Compiled in 87ms (277 modules)
+ ✓ Compiled in 91ms (277 modules)
+ ✓ Compiled in 96ms (277 modules)
+ ✓ Compiled in 97ms (277 modules)
+ ✓ Compiled in 104ms (277 modules)
+ ✓ Compiled in 90ms (277 modules)
+ ✓ Compiled in 101ms (277 modules)
+ ✓ Compiled in 91ms (277 modules)
+ ✓ Compiled in 111ms (277 modules)
+ ✓ Compiled in 105ms (277 modules)
+ ✓ Compiled in 115ms (277 modules)
+ ✓ Compiled in 89ms (277 modules)
+ ✓ Compiled in 110ms (277 modules)
+ ✓ Compiled in 102ms (277 modules)
+ ✓ Compiled in 113ms (277 modules)
+ ✓ Compiled in 90ms (277 modules)
+ ✓ Compiled in 92ms (277 modules)
+ ✓ Compiled in 90ms (277 modules)
+ ✓ Compiled in 102ms (277 modules)
+ ✓ Compiled in 86ms (277 modules)
+ ✓ Compiled in 109ms (277 modules)
+ ✓ Compiled in 88ms (277 modules)
+ GET / 200 in 18ms
+ GET / 200 in 7ms
+ GET / 200 in 6ms
+ ✓ Compiled in 109ms (277 modules)
+ ✓ Compiled in 132ms (283 modules)
+ GET / 200 in 15ms
+ ✓ Compiled in 95ms (283 modules)
+ GET / 200 in 17ms
+ GET / 200 in 10ms
